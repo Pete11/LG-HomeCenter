@@ -1,0 +1,99 @@
+
+name: Build and publish Homebrew IPK
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install webOS CLI
+        run: npm install --global @webos-tools/cli@3.2.6
+
+      - name: Set application version
+        id: meta
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(node -p "require('./app/appinfo.json').version")"
+          fi
+          node - "$VERSION" <<'NODE'
+          const fs = require('fs');
+          const file = 'app/appinfo.json';
+          const info = JSON.parse(fs.readFileSync(file, 'utf8'));
+          info.version = process.argv[2];
+          fs.writeFileSync(file, JSON.stringify(info, null, 2) + '\n');
+          NODE
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Validate source and package IPK
+        shell: bash
+        run: |
+          node --check app/app.js
+          node -e "JSON.parse(require('fs').readFileSync('app/appinfo.json', 'utf8'))"
+          mkdir -p dist
+          ares-package app -o dist
+          test -n "$(find dist -maxdepth 1 -type f -name '*.ipk' -print -quit)"
+
+      - name: Generate Homebrew manifest
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          IPK_PATH="$(find dist -maxdepth 1 -type f -name '*.ipk' -print -quit)"
+          IPK_NAME="$(basename "$IPK_PATH")"
+          SHA256="$(sha256sum "$IPK_PATH" | awk '{print $1}')"
+          IPK_SIZE="$(stat -c '%s' "$IPK_PATH")"
+          ICON_URL="https://raw.githubusercontent.com/${REPOSITORY}/main/app/icon.png"
+          SOURCE_URL="https://github.com/${REPOSITORY}"
+          IPK_URL="https://github.com/${REPOSITORY}/releases/download/${TAG}/${IPK_NAME}"
+          export IPK_NAME SHA256 IPK_SIZE ICON_URL SOURCE_URL IPK_URL
+          python3 - <<'PY'
+          import json, os
+          manifest = {
+              "id": "com.homecenter.launcher",
+              "version": os.environ["VERSION"],
+              "type": "web",
+              "title": "LG Home Center",
+              "appDescription": "A customizable, cinematic home launcher for rooted LG webOS TVs.",
+              "iconUri": os.environ["ICON_URL"],
+              "sourceUrl": os.environ["SOURCE_URL"],
+              "rootRequired": False,
+              "ipkUrl": os.environ["IPK_URL"],
+              "ipkHash": {"sha256": os.environ["SHA256"]},
+              "ipkSize": int(os.environ["IPK_SIZE"])
+          }
+          with open("dist/com.homecenter.launcher.manifest.json", "w", encoding="utf-8") as f:
+              json.dump(manifest, f, indent=2)
+              f.write("\n")
+          PY
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: LG Home Center ${{ steps.meta.outputs.version }}
+          generate_release_notes: true
+          files: |
+            dist/*.ipk
+            dist/com.homecenter.launcher.manifest.json
