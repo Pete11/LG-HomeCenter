@@ -1,4 +1,3 @@
-
 name: Build and publish Homebrew IPK
 
 on:
@@ -25,6 +24,22 @@ jobs:
       - name: Install webOS CLI
         run: npm install --global @webos-tools/cli@3.2.6
 
+      - name: Add official webOSTV.js runtime
+        shell: bash
+        run: |
+          SCAFFOLD="$RUNNER_TEMP/homecenter-webos-scaffold"
+          rm -rf "$SCAFFOLD"
+          ares-generate -t basic -p "id=com.homecenter.scaffold" "$SCAFFOLD"
+          LIBRARY="$(find "$SCAFFOLD" -type f -name 'webOSTV.js' -print -quit)"
+          if [[ -z "$LIBRARY" ]]; then
+            echo 'webOSTV.js was not found in the official basic template.' >&2
+            find "$SCAFFOLD" -maxdepth 4 -type f | sort
+            exit 1
+          fi
+          mkdir -p app/webOSTVjs-1.2.13
+          cp "$LIBRARY" app/webOSTVjs-1.2.13/webOSTV.js
+          test -s app/webOSTVjs-1.2.13/webOSTV.js
+
       - name: Set application version
         id: meta
         shell: bash
@@ -49,6 +64,8 @@ jobs:
         run: |
           node --check app/app.js
           node -e "JSON.parse(require('fs').readFileSync('app/appinfo.json', 'utf8'))"
+          test -s app/webOSTVjs-1.2.13/webOSTV.js
+          grep -q 'webOSTVjs-1.2.13/webOSTV.js' app/index.html
           mkdir -p dist
           ares-package app -o dist
           test -n "$(find dist -maxdepth 1 -type f -name '*.ipk' -print -quit)"
