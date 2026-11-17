@@ -1,0 +1,422 @@
+(function () {
+  'use strict';
+  const STORAGE_KEY = 'homecenter.settings.v1';
+  const DEFAULTS = {
+    city: 'Bucharest', weatherInterval: 30,
+    apps: [
+      { name: 'Nuvio', appId: '', symbol: 'N', kind: 'nuvio' },
+      { name: 'YouTube', appId: '', symbol: '▶', kind: 'youtube' },
+      { name: 'Prime Video', appId: '', symbol: 'prime', kind: 'prime' },
+      { name: 'Spotify', appId: '', symbol: '◉', kind: 'spotify' },
+      { name: 'Plex', appId: '', symbol: 'P', kind: 'plex' }
+    ],
+    textBrightness: 78, iconBrightness: 72, clockBrightness: 72, glassTransparency: 62, dockBlur: 16, glassTint: 'dark', glassGradient: 58,
+    pixelShift: false, idleDim: true, screensaverEnabled: true, screensaverDelay: 5, screensaverMode: 'clock',
+    autoStandby: 'off', scheduledPowerOffEnabled: false, scheduledPowerOff: '01:00', customCss: '', wallpaperUrl: ''
+  };
+  let settings = loadSettings();
+  let weatherTimer = null;
+  let idleTimer = null;
+  let dimTimer = null;
+  let toastTimer = null;
+  let currentFocus = 0;
+  let weatherState = { temperature: null, code: null, description: 'Loading weather', daily: null, location: 'Bucharest', updatedAt: null };
+  let wallpaperObjectUrl = null;
+  let dbPromise = null;
+
+  const $ = (id) => document.getElementById(id);
+  const tiles = () => Array.from(document.querySelectorAll('.app-tile'));
+
+  function clone(value) { return JSON.parse(JSON.stringify(value)); }
+  function loadSettings() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      let apps = Array.isArray(saved.apps) ? saved.apps.slice(0, 6) : clone(DEFAULTS.apps);
+      // Remove the old visible '+' placeholder from prototype 0.1 during migration.
+      if (apps.length && /^Shortcut 6$/i.test(String(apps[apps.length - 1].name || '')) && !apps[apps.length - 1].appId && apps[apps.length - 1].kind === 'custom') apps.pop();
+      if (!apps.length) apps = clone(DEFAULTS.apps);
+      const merged = Object.assign(clone(DEFAULTS), saved, { apps });
+      if (!Number.isFinite(Number(saved.glassTransparency))) merged.glassTransparency = DEFAULTS.glassTransparency;
+      delete merged.dockOpacity;
+      return merged;
+    } catch (_) { return clone(DEFAULTS); }
+  }
+  function saveSettings() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); $('saveState').textContent = 'Saved locally'; }
+    catch (error) { $('saveState').textContent = 'Could not save: storage is full'; }
+  }
+  function toast(message) {
+    const node = $('toast'); node.textContent = message; node.classList.add('visible');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => node.classList.remove('visible'), 2500);
+  }
+  function pad(value) { return String(value).padStart(2, '0'); }
+  function updateClock() {
+    const now = new Date();
+    const time = pad(now.getHours()) + ':' + pad(now.getMinutes());
+    const date = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(now);
+    $('clockTime').textContent = time; $('clockDate').textContent = date.toUpperCase();
+    $('screensaverTime').textContent = time; $('screensaverDate').textContent = date.toUpperCase();
+  }
+  function weatherDescription(code) {
+    const map = {0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Dense drizzle',56:'Freezing drizzle',57:'Heavy freezing drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',66:'Freezing rain',67:'Heavy freezing rain',71:'Light snow',73:'Snow',75:'Heavy snow',77:'Snow grains',80:'Rain showers',81:'Rain showers',82:'Heavy rain showers',85:'Snow showers',86:'Heavy snow showers',95:'Thunderstorm',96:'Thunderstorm with hail',99:'Severe thunderstorm with hail'};
+    return map[code] || 'Current conditions';
+  }
+  function weatherSymbol(code) {
+    if (code === 0) return '☼'; if ([1,2].includes(code)) return '◐'; if ([3,45,48].includes(code)) return '☁';
+    if (code >= 51 && code <= 67 || code >= 80 && code <= 82) return '☂'; if (code >= 71 && code <= 77) return '❄'; if (code >= 95) return 'ϟ'; return '◌';
+  }
+  async function refreshWeather() {
+    const city = (settings.city || 'Bucharest').trim();
+    $('weatherDetail').textContent = 'Updating…';
+    try {
+      const geoUrl = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(city) + '&count=1&language=en&format=json';
+      const geoResponse = await fetch(geoUrl, { cache: 'no-store' });
+      if (!geoResponse.ok) throw new Error('Geocoding unavailable');
+      const geo = await geoResponse.json();
+      if (!geo.results || !geo.results.length) throw new Error('City not found');
+      const place = geo.results[0];
+      const forecastUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + place.latitude + '&longitude=' + place.longitude + '&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&forecast_days=10&timezone=auto';
+      const forecastResponse = await fetch(forecastUrl, { cache: 'no-store' });
+      if (!forecastResponse.ok) throw new Error('Forecast unavailable');
+      const forecast = await forecastResponse.json();
+      const current = forecast.current;
+      weatherState = { temperature: Math.round(current.temperature_2m), code: current.weather_code, description: weatherDescription(current.weather_code), daily: forecast.daily || null, location: place.name, updatedAt: new Date() };
+      $('weatherTemp').textContent = weatherState.temperature + '°';
+      $('weatherIcon').textContent = weatherSymbol(weatherState.code);
+      $('weatherDetail').textContent = weatherState.description;
+      $('weatherCity').textContent = String(place.name).toUpperCase();
+      $('screensaverWeather').textContent = weatherState.temperature + '° · ' + weatherState.description.toUpperCase();
+    } catch (error) {
+      $('weatherDetail').textContent = 'Weather unavailable';
+      $('weatherCity').textContent = city.toUpperCase();
+    }
+  }
+  function formatForecastDate(isoDate) {
+    const date = new Date(String(isoDate) + 'T12:00:00');
+    return {
+      weekday: new Intl.DateTimeFormat('en-GB', { weekday: 'short' }).format(date).toUpperCase(),
+      date: new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' }).format(date).toUpperCase()
+    };
+  }
+  function renderForecast() {
+    const grid = $('forecastGrid');
+    grid.innerHTML = '';
+    $('forecastLocation').textContent = String(weatherState.location || settings.city || 'BUCHAREST').toUpperCase();
+    if (!weatherState.daily || !Array.isArray(weatherState.daily.time) || !weatherState.daily.time.length) {
+      const empty = document.createElement('div'); empty.className = 'forecast-empty'; empty.textContent = 'Forecast is not available yet. Check your internet connection and try again.'; grid.appendChild(empty);
+      $('forecastUpdated').textContent = 'NO FORECAST DATA';
+      return;
+    }
+    const daily = weatherState.daily;
+    const count = Math.min(10, daily.time.length);
+    for (let i = 0; i < count; i++) {
+      const day = document.createElement('article'); day.className = 'forecast-day';
+      const date = formatForecastDate(daily.time[i]);
+      const name = document.createElement('div'); name.className = 'forecast-day-name'; name.textContent = i === 0 ? 'TODAY' : date.weekday;
+      const dateLabel = document.createElement('div'); dateLabel.className = 'forecast-day-date'; dateLabel.textContent = date.date;
+      const icon = document.createElement('div'); icon.className = 'forecast-day-icon'; icon.textContent = weatherSymbol(Number(daily.weather_code && daily.weather_code[i]));
+      const summary = document.createElement('div'); summary.className = 'forecast-day-summary'; summary.textContent = weatherDescription(Number(daily.weather_code && daily.weather_code[i]));
+      const temps = document.createElement('div'); temps.className = 'forecast-temps';
+      const high = document.createElement('span'); high.className = 'forecast-high'; high.textContent = Number.isFinite(Number(daily.temperature_2m_max && daily.temperature_2m_max[i])) ? Math.round(daily.temperature_2m_max[i]) + '°' : '—';
+      const low = document.createElement('span'); low.className = 'forecast-low'; low.textContent = Number.isFinite(Number(daily.temperature_2m_min && daily.temperature_2m_min[i])) ? Math.round(daily.temperature_2m_min[i]) + '°' : '—';
+      temps.append(high, low);
+      const extra = document.createElement('div'); extra.className = 'forecast-extra';
+      const rain = daily.precipitation_probability_max && daily.precipitation_probability_max[i];
+      const wind = daily.wind_speed_10m_max && daily.wind_speed_10m_max[i];
+      extra.textContent = (rain == null ? '—' : Math.round(rain) + '% rain') + '  ·  ' + (wind == null ? '—' : Math.round(wind) + ' km/h');
+      day.append(name, dateLabel, icon, summary, temps, extra); grid.appendChild(day);
+    }
+    const updated = weatherState.updatedAt instanceof Date ? weatherState.updatedAt : new Date();
+    $('forecastUpdated').textContent = 'UPDATED ' + new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit' }).format(updated);
+  }
+  function openForecast() {
+    closeScreensaver();
+    renderForecast();
+    $('forecastOverlay').classList.remove('hidden'); $('forecastOverlay').setAttribute('aria-hidden', 'false');
+    $('closeForecast').focus();
+    if (!weatherState.daily) refreshWeather().then(renderForecast);
+  }
+  function closeForecast() {
+    $('forecastOverlay').classList.add('hidden'); $('forecastOverlay').setAttribute('aria-hidden', 'true');
+    $('weatherDisplay').focus(); resetIdleTimer();
+  }
+  function scheduleWeather() {
+    clearInterval(weatherTimer); refreshWeather();
+    weatherTimer = setInterval(refreshWeather, Math.max(15, Number(settings.weatherInterval) || 30) * 60000);
+  }
+  function applyVisualSettings() {
+    const root = document.documentElement;
+    root.style.setProperty('--text-brightness', Math.max(.15, settings.textBrightness / 100));
+    root.style.setProperty('--icon-brightness', Math.max(.15, settings.iconBrightness / 100));
+    root.style.setProperty('--clock-brightness', Math.max(.15, settings.clockBrightness / 100));
+    root.style.setProperty('--dock-glass-alpha', Math.max(.15, Math.min(.8, 1 - (settings.glassTransparency / 100))));
+    root.style.setProperty('--dock-blur', Math.max(0, settings.dockBlur) + 'px');
+    root.style.setProperty('--dock-gradient-alpha', Math.max(0, Math.min(1, Number(settings.glassGradient) / 100)) * .68);
+    document.body.classList.toggle('glass-light', settings.glassTint === 'light');
+    document.body.classList.toggle('pixel-shift', !!settings.pixelShift);
+    document.body.classList.toggle('idle-dim', !!settings.idleDim);
+    applyCustomCss(settings.customCss || '');
+  }
+  function applyCustomCss(css) {
+    let style = $('userCustomCss');
+    if (!style) { style = document.createElement('style'); style.id = 'userCustomCss'; document.head.appendChild(style); }
+    style.textContent = String(css || '').slice(0, 12000);
+  }
+  function renderApps() {
+    const row = $('appRow'); row.innerHTML = '';
+    settings.apps = settings.apps.slice(0, 6);
+    const count = Math.max(1, settings.apps.length);
+    row.style.setProperty('--app-count', count);
+    settings.apps.forEach((app, index) => {
+      const button = document.createElement('button'); button.className = 'app-tile'; button.type = 'button'; button.dataset.index = String(index);
+      const symbol = document.createElement('span'); symbol.className = 'app-symbol symbol-' + safeClass(app.kind); symbol.textContent = app.symbol === 'prime' ? '' : (app.symbol || '◇');
+      if (app.kind === 'prime') { symbol.innerHTML = 'prime<br><small>video</small>'; }
+      const label = document.createElement('span'); label.className = 'app-label'; label.textContent = app.name || ('Shortcut ' + (index + 1));
+      button.append(symbol, label); button.setAttribute('aria-label', 'Open ' + (app.name || ('Shortcut ' + (index + 1))));
+      button.addEventListener('click', () => launchApp(index));
+      button.addEventListener('focus', () => setFocus(index));
+      // LG Magic Remote exposes its air-mouse pointer as mouse/pointer events.
+      // Hovering a tile moves the active selection; OK/Enter launches it.
+      button.addEventListener('pointerenter', () => focusTileFromPointer(button));
+      button.addEventListener('mouseenter', () => focusTileFromPointer(button));
+      row.appendChild(button);
+    });
+    setFocus(Math.min(currentFocus, settings.apps.length - 1));
+  }
+  function focusTileFromPointer(tile) {
+    const index = Number(tile && tile.dataset ? tile.dataset.index : NaN);
+    if (!Number.isInteger(index) || index < 0 || index >= tiles().length) return;
+    setFocus(index);
+    if (document.activeElement !== tile) {
+      try { tile.focus({ preventScroll: true }); } catch (_) { tile.focus(); }
+    }
+  }
+  function safeClass(value) { return String(value || 'custom').replace(/[^a-z0-9_-]/gi, '').slice(0, 20) || 'custom'; }
+  function setFocus(index) {
+    const maxIndex = Math.max(0, tiles().length - 1);
+    currentFocus = Math.max(0, Math.min(maxIndex, index));
+    tiles().forEach((tile, i) => { tile.classList.toggle('focused', i === currentFocus); });
+  }
+  function launchApp(index) {
+    const app = settings.apps[index];
+    if (!app || !String(app.appId || '').trim()) { openSettings('apps'); toast('Enter this app’s ID in Settings → Shortcuts.'); return; }
+    const params = { id: String(app.appId).trim(), params: {} };
+    if (window.webOS && webOS.service && typeof webOS.service.request === 'function') {
+      webOS.service.request('luna://com.webos.applicationManager', { method: 'launch', parameters: params,
+        onSuccess: function (response) { if (response && response.returnValue === false) toast('Launch failed: ' + (response.errorText || 'webOS error')); },
+        onFailure: function (error) { toast('Could not launch the app. Check its ID.'); console.warn(error); }
+      });
+      return;
+    }
+    if (typeof window.PalmServiceBridge === 'function') {
+      const bridge = new window.PalmServiceBridge();
+      bridge.onservicecallback = function (message) {
+        try { const result = JSON.parse(message); if (result.returnValue === false) toast('Launch failed: ' + (result.errorText || 'webOS error')); }
+        catch (_) { toast('Response received from webOS.'); }
+      };
+      bridge.call('luna://com.webos.applicationManager/launch', JSON.stringify(params));
+      return;
+    }
+    toast('App launching is available only on a webOS TV.');
+  }
+  function openSettings(tab) {
+    closeScreensaver(); $('settingsOverlay').classList.remove('hidden'); $('settingsOverlay').setAttribute('aria-hidden', 'false');
+    selectTab(tab || 'general'); renderAppEditor(); hydrateSettingsForm();
+    const first = document.querySelector('.settings-tab.active'); if (first) first.focus();
+  }
+  function closeSettings() {
+    $('settingsOverlay').classList.add('hidden'); $('settingsOverlay').setAttribute('aria-hidden', 'true');
+    if (tiles()[currentFocus]) tiles()[currentFocus].focus(); resetIdleTimer();
+  }
+  function selectTab(name) {
+    document.querySelectorAll('.settings-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.tab === name));
+    document.querySelectorAll('.settings-page').forEach(page => page.classList.toggle('active', page.dataset.page === name));
+    const title = document.querySelector('.settings-tab.active'); $('settingsTitle').textContent = title ? title.textContent : 'General';
+  }
+  function renderAppEditor() {
+    const editor = $('appEditor'); editor.innerHTML = '';
+    settings.apps.forEach((app, index) => {
+      const row = document.createElement('div'); row.className = 'app-edit-row';
+      const label = document.createElement('label'); label.textContent = 'SHORTCUT ' + (index + 1);
+      const name = document.createElement('input'); name.type = 'text'; name.maxLength = 22; name.value = app.name || ''; name.placeholder = 'App name'; name.setAttribute('aria-label', 'Shortcut name ' + (index + 1));
+      const id = document.createElement('input'); id.type = 'text'; id.maxLength = 120; id.value = app.appId || ''; id.placeholder = 'webOS app ID'; id.setAttribute('aria-label', 'App ID ' + (index + 1));
+      const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'remove-shortcut'; remove.textContent = '×'; remove.title = 'Remove shortcut'; remove.setAttribute('aria-label', 'Remove shortcut ' + (index + 1));
+      name.addEventListener('change', () => { settings.apps[index].name = name.value.trim() || ('Shortcut ' + (index + 1)); saveSettings(); renderApps(); });
+      id.addEventListener('change', () => { settings.apps[index].appId = id.value.trim(); saveSettings(); });
+      remove.addEventListener('click', () => {
+        if (settings.apps.length <= 1) { toast('At least one shortcut must remain in the dock.'); return; }
+        settings.apps.splice(index, 1); currentFocus = Math.min(currentFocus, settings.apps.length - 1);
+        saveSettings(); renderAppEditor(); renderApps(); updateShortcutCount(); toast('Shortcut removed.');
+      });
+      row.append(label, remove, name, id); editor.appendChild(row);
+    });
+    updateShortcutCount();
+  }
+  function updateShortcutCount() {
+    $('shortcutCount').textContent = settings.apps.length + ' of 6 shortcuts';
+    $('addShortcut').disabled = settings.apps.length >= 6;
+  }
+  function addShortcut() {
+    if (settings.apps.length >= 6) { toast('The dock supports up to 6 shortcuts.'); return; }
+    settings.apps.push({ name: 'New Shortcut', appId: '', symbol: '◇', kind: 'custom' });
+    currentFocus = settings.apps.length - 1; saveSettings(); renderAppEditor(); renderApps();
+    const nameInputs = $('appEditor').querySelectorAll('input[type="text"]');
+    if (nameInputs.length) nameInputs[nameInputs.length - 2].focus();
+    toast('New shortcut added. Enter its name and webOS app ID.');
+  }
+  function hydrateSettingsForm() {
+    $('weatherCityInput').value = settings.city || 'Bucharest'; $('weatherInterval').value = String(settings.weatherInterval || 30);
+    $('wallpaperUrl').value = settings.wallpaperUrl || '';
+    ['textBrightness','iconBrightness','clockBrightness','glassTransparency','dockBlur','glassGradient'].forEach(id => {
+      $(id).value = settings[id]; const suffix = id === 'dockBlur' ? 'px' : '%'; $(id + 'Value').textContent = settings[id] + suffix;
+    });
+    $('glassTint').value = settings.glassTint || 'dark';
+    ['pixelShift','idleDim','screensaverEnabled','scheduledPowerOffEnabled'].forEach(id => $(id).checked = !!settings[id]);
+    $('screensaverDelay').value = String(settings.screensaverDelay); $('screensaverMode').value = settings.screensaverMode;
+    $('autoStandby').value = settings.autoStandby; $('scheduledPowerOff').value = settings.scheduledPowerOff;
+    $('customCss').value = settings.customCss || '';
+  }
+  function bindSettings() {
+    document.querySelectorAll('.settings-tab').forEach(tab => tab.addEventListener('click', () => selectTab(tab.dataset.tab)));
+    $('settingsButton').addEventListener('click', () => openSettings('general'));
+    $('addShortcut').addEventListener('click', addShortcut);
+    $('closeSettings').addEventListener('click', closeSettings); $('doneSettings').addEventListener('click', closeSettings);
+    $('weatherCityInput').addEventListener('change', () => { settings.city = $('weatherCityInput').value.trim() || 'Bucharest'; saveSettings(); scheduleWeather(); });
+    $('weatherInterval').addEventListener('change', () => { settings.weatherInterval = Number($('weatherInterval').value); saveSettings(); scheduleWeather(); });
+    ['textBrightness','iconBrightness','clockBrightness','glassTransparency','dockBlur','glassGradient'].forEach(id => $(id).addEventListener('input', () => {
+      settings[id] = Number($(id).value); const suffix = id === 'dockBlur' ? 'px' : '%'; $(id + 'Value').textContent = settings[id] + suffix; applyVisualSettings(); saveSettings();
+    }));
+    ['pixelShift','idleDim','screensaverEnabled','scheduledPowerOffEnabled'].forEach(id => $(id).addEventListener('change', () => { settings[id] = $(id).checked; applyVisualSettings(); saveSettings(); resetIdleTimer(); }));
+    ['screensaverDelay','screensaverMode','autoStandby','scheduledPowerOff'].forEach(id => $(id).addEventListener('change', () => { settings[id] = $(id).value; saveSettings(); resetIdleTimer(); }));
+    $('glassTint').addEventListener('change', () => { settings.glassTint = $('glassTint').value === 'light' ? 'light' : 'dark'; applyVisualSettings(); saveSettings(); toast(settings.glassTint === 'light' ? 'Frosted white glass enabled.' : 'Smoked black glass enabled.'); });
+    $('applyCustomCss').addEventListener('click', () => { settings.customCss = $('customCss').value; applyCustomCss(settings.customCss); saveSettings(); toast('Custom CSS applied.'); });
+    $('applyWallpaperUrl').addEventListener('click', () => { const url = $('wallpaperUrl').value.trim(); if (url && /^https?:\/\//i.test(url)) { settings.wallpaperUrl = url; localStorage.removeItem('homecenter.wallpaper.blob'); applyWallpaperUrl(url); saveSettings(); toast('Wallpaper updated.'); } else toast('Enter a valid HTTP(S) URL.'); });
+    $('wallpaperFile').addEventListener('change', handleWallpaperFile);
+    $('clearWallpaper').addEventListener('click', async () => { settings.wallpaperUrl = ''; saveSettings(); await deleteWallpaperBlob(); applyWallpaperUrl(''); toast('Default wallpaper restored.'); });
+    $('exportSettings').addEventListener('click', exportSettings);
+    $('importSettingsFile').addEventListener('change', importSettings);
+  }
+  function applyWallpaperUrl(url) {
+    if (wallpaperObjectUrl) { URL.revokeObjectURL(wallpaperObjectUrl); wallpaperObjectUrl = null; }
+    const home = $('home');
+    if (!url) { home.classList.remove('has-wallpaper'); home.style.removeProperty('--wallpaper-image'); $('screensaver').style.removeProperty('--screensaver-image'); return; }
+    const safeUrl = url.replace(/["\\]/g, ''); home.style.setProperty('--wallpaper-image', 'url("' + safeUrl + '")'); home.classList.add('has-wallpaper');
+    $('screensaver').style.setProperty('--screensaver-image', 'url("' + safeUrl + '")');
+  }
+  function openDb() {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject) => {
+      if (!window.indexedDB) return reject(new Error('IndexedDB unavailable'));
+      const request = indexedDB.open('HomeCenterDB', 1);
+      request.onupgradeneeded = () => { if (!request.result.objectStoreNames.contains('wallpaper')) request.result.createObjectStore('wallpaper'); };
+      request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
+    });
+    return dbPromise;
+  }
+  async function saveWallpaperBlob(blob) {
+    const db = await openDb(); return new Promise((resolve, reject) => { const tx = db.transaction('wallpaper', 'readwrite'); tx.objectStore('wallpaper').put(blob, 'current'); tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); });
+  }
+  async function getWallpaperBlob() {
+    const db = await openDb(); return new Promise((resolve, reject) => { const request = db.transaction('wallpaper', 'readonly').objectStore('wallpaper').get('current'); request.onsuccess = () => resolve(request.result || null); request.onerror = () => reject(request.error); });
+  }
+  async function deleteWallpaperBlob() {
+    try { const db = await openDb(); return new Promise(resolve => { const tx = db.transaction('wallpaper', 'readwrite'); tx.objectStore('wallpaper').delete('current'); tx.oncomplete = resolve; tx.onerror = resolve; }); } catch (_) { /* no-op */ }
+  }
+  async function handleWallpaperFile(event) {
+    const file = event.target.files && event.target.files[0]; if (!file) return;
+    if (!file.type.startsWith('image/')) { toast('Select an image file.'); return; }
+    if (file.size > 12 * 1024 * 1024) { toast('Choose an image no larger than 12 MB.'); return; }
+    try { await saveWallpaperBlob(file); settings.wallpaperUrl = ''; saveSettings(); await showStoredWallpaper(); toast('Wallpaper saved locally.'); }
+    catch (error) { toast('Could not save the image to local storage.'); }
+  }
+  async function showStoredWallpaper() {
+    try {
+      const blob = await getWallpaperBlob();
+      if (!blob) return;
+      if (wallpaperObjectUrl) URL.revokeObjectURL(wallpaperObjectUrl);
+      wallpaperObjectUrl = URL.createObjectURL(blob);
+      $('home').style.setProperty('--wallpaper-image', 'url("' + wallpaperObjectUrl + '")'); $('home').classList.add('has-wallpaper');
+      $('screensaver').style.setProperty('--screensaver-image', 'url("' + wallpaperObjectUrl + '")');
+    } catch (_) { /* wallpaper is optional */ }
+  }
+  function exportSettings() {
+    const data = JSON.stringify(settings, null, 2); const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'homecenter-settings.json'; anchor.click(); URL.revokeObjectURL(url); toast('Settings exported.');
+  }
+  function importSettings(event) {
+    const file = event.target.files && event.target.files[0]; if (!file) return;
+    const reader = new FileReader(); reader.onload = () => {
+      try {
+        const imported = JSON.parse(String(reader.result));
+        settings = Object.assign(clone(DEFAULTS), imported);
+        if (!Number.isFinite(Number(imported.glassTransparency))) settings.glassTransparency = DEFAULTS.glassTransparency;
+        delete settings.dockOpacity;
+        if (!Array.isArray(settings.apps)) settings.apps = clone(DEFAULTS.apps);
+        settings.apps = settings.apps.slice(0, 6);
+        if (settings.apps.length && /^Shortcut 6$/i.test(String(settings.apps[settings.apps.length - 1].name || '')) && !settings.apps[settings.apps.length - 1].appId && settings.apps[settings.apps.length - 1].kind === 'custom') settings.apps.pop();
+        if (!settings.apps.length) settings.apps = clone(DEFAULTS.apps);
+        saveSettings(); applyVisualSettings(); renderApps(); renderAppEditor(); hydrateSettingsForm(); scheduleWeather(); toast('Settings imported.');
+      }
+      catch (_) { toast('Invalid JSON file.'); }
+    }; reader.readAsText(file); event.target.value = '';
+  }
+  function showScreensaver() {
+    if (!settings.screensaverEnabled || !$('settingsOverlay').classList.contains('hidden') || !$('forecastOverlay').classList.contains('hidden')) return;
+    $('screensaver').classList.toggle('mode-wallpaper', settings.screensaverMode === 'wallpaper');
+    $('screensaver').classList.remove('hidden'); $('screensaver').setAttribute('aria-hidden', 'false'); updateClock();
+  }
+  function closeScreensaver() {
+    $('screensaver').classList.add('hidden'); $('screensaver').setAttribute('aria-hidden', 'true'); resetIdleTimer();
+  }
+  function resetIdleTimer() {
+    clearTimeout(idleTimer); clearTimeout(dimTimer); document.body.classList.remove('idle-dim');
+    if (!$('settingsOverlay').classList.contains('hidden') || !$('forecastOverlay').classList.contains('hidden')) return;
+    if (settings.idleDim) dimTimer = setTimeout(() => document.body.classList.add('idle-dim'), 30000);
+    if (!settings.screensaverEnabled) return;
+    const delay = Math.max(1, Number(settings.screensaverDelay) || 5) * 60000;
+    idleTimer = setTimeout(showScreensaver, delay);
+  }
+  function handleKeyDown(event) {
+    const inSettings = !$('settingsOverlay').classList.contains('hidden');
+    const forecastVisible = !$('forecastOverlay').classList.contains('hidden');
+    const saverVisible = !$('screensaver').classList.contains('hidden');
+    const isConfirm = event.key === 'Enter' || event.key === 'Accept' || [13, 23, 66].includes(event.keyCode);
+    if (saverVisible) { event.preventDefault(); closeScreensaver(); return; }
+    if (event.key === 'Escape' || event.keyCode === 461 || event.keyCode === 27) {
+      if (forecastVisible) { event.preventDefault(); closeForecast(); }
+      else if (inSettings) { event.preventDefault(); closeSettings(); }
+      else { event.preventDefault(); openSettings('general'); }
+      return;
+    }
+    if (forecastVisible) {
+      if (isConfirm && document.activeElement && document.activeElement.tagName === 'BUTTON') {
+        event.preventDefault(); document.activeElement.click();
+      }
+      return;
+    }
+    if (inSettings) return;
+    if (event.key === 'ArrowRight' || event.keyCode === 39) { event.preventDefault(); setFocus((currentFocus + 1) % Math.max(1, tiles().length)); tiles()[currentFocus].focus(); }
+    else if (event.key === 'ArrowLeft' || event.keyCode === 37) { event.preventDefault(); setFocus((currentFocus + tiles().length - 1) % Math.max(1, tiles().length)); tiles()[currentFocus].focus(); }
+    else if (isConfirm && document.activeElement && document.activeElement.id === 'weatherDisplay') { event.preventDefault(); openForecast(); }
+    else if (isConfirm) { event.preventDefault(); launchApp(currentFocus); }
+  }
+  function init() {
+    renderApps(); applyVisualSettings(); bindSettings();
+    $('settingsButton').addEventListener('focus', () => {});
+    $('weatherDisplay').addEventListener('click', openForecast);
+    $('closeForecast').addEventListener('click', closeForecast);
+    window.addEventListener('keydown', handleKeyDown, true);
+    // Some webOS builds dispatch mousemove rather than Pointer Events for the Magic Remote.
+    const updatePointerFocus = (event) => {
+      const tile = event.target && event.target.closest ? event.target.closest('.app-tile') : null;
+      if (tile && Number(tile.dataset.index) !== currentFocus) focusTileFromPointer(tile);
+    };
+    $('appRow').addEventListener('pointermove', updatePointerFocus, { passive: true });
+    $('appRow').addEventListener('mousemove', updatePointerFocus, { passive: true });
+    ['pointerdown','mousemove','touchstart','keydown'].forEach(name => window.addEventListener(name, () => { if (!$('screensaver').classList.contains('hidden')) closeScreensaver(); else resetIdleTimer(); }, { passive: true }));
+    updateClock(); setInterval(updateClock, 1000); scheduleWeather(); resetIdleTimer();
+    if (settings.wallpaperUrl) applyWallpaperUrl(settings.wallpaperUrl); else showStoredWallpaper();
+    if (tiles()[0]) tiles()[0].focus();
+  }
+  document.addEventListener('DOMContentLoaded', init);
+})();

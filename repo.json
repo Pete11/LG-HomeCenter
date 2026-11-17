@@ -1,0 +1,16 @@
+{
+  "paging": {
+    "page": 1,
+    "count": 1,
+    "maxPage": 1,
+    "itemsTotal": 1
+  },
+  "packages": [
+    {
+      "id": "com.homecenter.launcher",
+      "title": "LG Home Center",
+      "iconUri": "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/LG-HomeCenter/main/app/icon.png",
+      "manifestUrl": "https://github.com/YOUR_GITHUB_USERNAME/LG-HomeCenter/releases/latest/download/com.homecenter.launcher.manifest.json"
+    }
+  ]
+}
