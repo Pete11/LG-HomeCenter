@@ -1,3 +1,4 @@
+
 {
   "paging": {
     "page": 1,
@@ -9,8 +10,8 @@
     {
       "id": "com.homecenter.launcher",
       "title": "LG Home Center",
-      "iconUri": "https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/LG-HomeCenter/main/app/icon.png",
-      "manifestUrl": "https://github.com/YOUR_GITHUB_USERNAME/LG-HomeCenter/releases/latest/download/com.homecenter.launcher.manifest.json"
+      "iconUri": "https://raw.githubusercontent.com/Pete11/LG-HomeCenter/main/app/icon.png",
+      "manifestUrl": "https://github.com/Pete11/LG-HomeCenter/releases/latest/download/com.homecenter.launcher.manifest.json"
     }
   ]
 }
