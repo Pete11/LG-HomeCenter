@@ -1,4 +1,1 @@
-Folder rezervat pentru biblioteca oficială webOSTV.js v1.2.13.
-Prototipul folosește în prezent webOS.service.request dacă biblioteca este disponibilă și PalmServiceBridge ca fallback.
-Pentru a include biblioteca oficială, descarcă arhiva de pe pagina LG Developer și extrage webOSTV.js în acest folder, apoi adaugă scriptul în index.html înainte de app.js.
-Nu am inclus o copie neverificată a bibliotecii.
+The official LG webOSTV.js 1.2.13 runtime is downloaded during the GitHub Actions build from LG's webOS TV Developer site. The workflow copies the real webOSTV.js file into this folder before packaging. This repository does not commit a separate copy of the vendor library.

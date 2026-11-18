@@ -17,9 +17,11 @@ button, input, select, textarea { font:inherit; }
 button { color:inherit; }
 .hidden { display:none !important; }
 .home-screen { position:relative; isolation:isolate; width:100%; height:100%; min-height:100vh; overflow:hidden; background:#242424; background-image: radial-gradient(ellipse at 72% 42%, rgba(220,220,220,.45), transparent 34%), linear-gradient(115deg, #8c8c8c 0%, #4a4a4a 48%, #151515 100%); background-size:cover; background-position:center; }
-.home-screen::before { content:""; position:absolute; z-index:-2; inset:-2%; background:radial-gradient(ellipse at 22% 24%,rgba(255,255,255,.42),transparent 34%),radial-gradient(ellipse at 78% 70%,rgba(0,0,0,.34),transparent 48%),linear-gradient(140deg,#aaa 0%,#626262 42%,#242424 100%); transform:scale(1.02); }
-.home-screen.has-wallpaper::before { background-image:var(--wallpaper-image); background-position:center; background-size:cover; }
-.wallpaper-shade { position:absolute; inset:0; z-index:-1; background:linear-gradient(90deg,rgba(0,0,0,.2),transparent 60%),linear-gradient(0deg,rgba(0,0,0,.38),transparent 52%,rgba(0,0,0,.18)); }
+.home-screen::before { content:none; }
+.wallpaper-image { position:absolute; z-index:0; inset:0; display:block; width:100%; height:100%; object-fit:cover; object-position:center; opacity:0; pointer-events:none; transition:opacity 220ms ease; }
+.home-screen.has-wallpaper .wallpaper-image { opacity:1; }
+.wallpaper-shade { position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(90deg,rgba(0,0,0,.2),transparent 60%),linear-gradient(0deg,rgba(0,0,0,.38),transparent 52%,rgba(0,0,0,.18)); }
+.topbar,.dock-zone,.footerbar { z-index:2; }
 .topbar { position:absolute; top:var(--safe-pad-y); left:var(--safe-pad-x); right:var(--safe-pad-x); display:flex; justify-content:flex-end; align-items:flex-start; gap:3vw; }
 .top-right { display:flex; align-items:flex-start; gap:1vw; }
 .weather-display,.clock-display { display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:4px; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
@@ -172,7 +174,7 @@ body.idle-dim .home-screen .topbar,body.idle-dim .home-screen .footerbar { opaci
 @media (hover:hover) and (pointer:fine) { .app-tile:hover { z-index:2; } }
 
 
-/* Home Center 0.6.0: TV app picker and 4K wallpaper library */
+/* Home Center 0.7.0: TV app picker and local-first wallpaper library */
 .installed-app-tools { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:12px 0 16px; }
 .installed-app-tools .muted { font-size:11px; }
 .app-edit-row { display:flex; flex-direction:column; gap:9px; padding:14px; border:1px solid rgba(255,255,255,.10); border-radius:12px; background:rgba(0,0,0,.22); min-width:0; }
@@ -186,7 +188,28 @@ body.idle-dim .home-screen .topbar,body.idle-dim .home-screen .footerbar { opaci
 .wallpaper-card { display:flex; flex-direction:column; align-items:stretch; gap:6px; min-width:0; padding:7px; text-align:left; border:1px solid rgba(255,255,255,.18); border-radius:10px; background:rgba(0,0,0,.28); color:#fff; cursor:pointer; transition:border-color 120ms ease,transform 120ms ease,background 120ms ease; }
 .wallpaper-card:hover,.wallpaper-card:focus,.wallpaper-card.selected { border-color:rgba(255,255,255,.9); background:rgba(255,255,255,.09); transform:translateY(-2px); outline:none; }
 .wallpaper-card img { display:block; width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:6px; background:#151515; }
-.wallpaper-card-title { font-size:12px; font-weight:600; line-height:1.25; }
-.wallpaper-card-meta { color:rgba(255,255,255,.55); font-size:9px; line-height:1.3; }
-.wallpaper-gallery-status { margin-top:10px; font-size:10px; }
+.wallpaper-card-title { font-size:16px; font-weight:600; line-height:1.25; }
+.wallpaper-card-meta { color:rgba(255,255,255,.62); font-size:12px; line-height:1.3; }
+.wallpaper-gallery-status { margin-top:12px; font-size:14px; line-height:1.4; }
 @media (max-width:1100px) { .wallpaper-gallery { grid-template-columns:repeat(2,minmax(0,1fr)); } .app-editor { grid-template-columns:1fr; } }
+
+
+/* Home Center 0.7.0: full Magic Remote directional navigation and native app icons */
+.app-tile { position:relative; }
+.app-icon-image { display:block; width:clamp(54px,5.0vw,88px); height:clamp(54px,5.0vw,88px); object-fit:contain; border-radius:12px; background:var(--app-icon-bg,transparent); filter:brightness(var(--icon-brightness)); }
+.app-picker-line { display:grid; grid-template-columns:76px minmax(0,1fr); align-items:center; gap:14px; min-width:0; }
+.app-picker-preview { width:76px; height:76px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid rgba(255,255,255,.22); border-radius:13px; background:rgba(255,255,255,.08); color:#fff; font-size:28px; font-weight:700; }
+.app-picker-preview img { display:block; width:100%; height:100%; padding:7px; object-fit:contain; }
+.app-edit-row .installed-app-picker { width:100%; min-width:0; min-height:68px; padding:15px 18px; border:1px solid rgba(255,255,255,.22); border-radius:10px; background:#17191d; color:#fff; font-size:20px; line-height:1.35; }
+.app-edit-row .installed-app-picker option { font-size:18px; padding:8px; }
+.app-edit-head label { font-size:13px; letter-spacing:.12em; }
+.installed-app-tools .muted { font-size:15px; line-height:1.4; }
+.app-edit-fields input { min-height:54px; padding:13px 15px; font-size:17px; }
+.app-edit-row .remove-shortcut { width:42px; height:42px; font-size:24px; }
+.settings-tab:focus,.settings-tab.active:focus,.settings-main button:focus,.settings-main select:focus,.settings-main input:focus,.settings-main textarea:focus,.settings-main label:focus { outline:3px solid rgba(255,255,255,.88); outline-offset:3px; }
+.settings-content { scroll-behavior:smooth; }
+@media (max-width:1100px) { .app-picker-line { grid-template-columns:64px minmax(0,1fr); gap:10px; } .app-picker-preview { width:64px; height:64px; } .app-edit-row .installed-app-picker { min-height:60px; font-size:18px; } .app-edit-row .installed-app-picker option { font-size:16px; } }
+
+/* v0.7.0 wallpaper rendering: image is a real foreground layer, not a negative-z pseudo-element. */
+.wallpaper-card .wallpaper-preview-fallback { width:100%; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; border-radius:6px; background:linear-gradient(135deg,#18283c,#34475a 55%,#111827); color:rgba(255,255,255,.72); font-size:14px; letter-spacing:.08em; }
+.wallpaper-card-meta { overflow-wrap:anywhere; }

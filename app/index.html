@@ -9,6 +9,7 @@
 </head>
 <body>
   <main id="home" class="home-screen">
+    <img id="wallpaperImage" class="wallpaper-image" alt="" aria-hidden="true">
     <div class="wallpaper-shade"></div>
     <header class="topbar">
       <div class="top-right">
@@ -80,7 +81,7 @@
           <section class="settings-page active" data-page="general">
             <div class="setting-card">
               <h2>4K Wallpaper Library</h2>
-              <p>Choose a cinematic movie wallpaper or a 4K nature scene. Presets are streamed from their original sources; an internet connection is required.</p>
+              <p>Choose a bundled wallpaper that works offline, or load an online cinematic image. The bundled Alpine Lake image is included in this app package.</p>
               <label class="field-label" for="wallpaperCategory">Gallery</label>
               <select id="wallpaperCategory"><option value="nature">Nature · 4K</option><option value="cinema">Movies & Cinematic · 4K+</option></select>
               <div id="wallpaperGallery" class="wallpaper-gallery" aria-label="Wallpaper library"></div>
@@ -88,7 +89,7 @@
             </div>
             <div class="setting-card">
               <h2>Custom Wallpaper</h2>
-              <p>Choose a custom image or enter a direct image URL.</p>
+              <p>Upload a local image or enter a direct image URL. The selected local image is saved on this TV.</p>
               <label class="field-label" for="wallpaperUrl">Wallpaper URL</label>
               <div class="inline-field"><input id="wallpaperUrl" type="url" placeholder="https://.../wallpaper.jpg"><button id="applyWallpaperUrl" class="small-action">Apply</button></div>
               <label class="field-label" for="wallpaperFile">Local image</label>
@@ -123,7 +124,7 @@
           </section>
 
           <section class="settings-page" data-page="idle">
-            <div class="setting-card"><h2>Custom screensaver</h2><p>In this version, the screensaver runs as an overlay while Home Center is active. Native webOS screensaver integration will be handled after root-level testing on the TV.</p>
+            <div class="setting-card"><h2>Custom screensaver</h2><p>The custom screensaver runs while Home Center is active. Native system screensaver integration remains a separate root-level task.</p>
               <label class="toggle-row"><span>Enable screensaver</span><input id="screensaverEnabled" type="checkbox" checked></label>
               <label class="field-label" for="screensaverDelay">Start after inactivity</label><select id="screensaverDelay"><option value="1">1 minute (test)</option><option value="3">3 minutes</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option></select>
               <label class="field-label" for="screensaverMode">Mode</label><select id="screensaverMode"><option value="clock">Ambient · clock and weather</option><option value="wallpaper">Cinematic · dimmed wallpaper</option></select>
@@ -142,7 +143,7 @@
           <section class="settings-page" data-page="advanced">
             <div class="setting-card"><h2>Custom CSS</h2><p>Additional CSS rules. Avoid aggressive selectors that could hide controls or settings.</p><textarea id="customCss" spellcheck="false" placeholder=".clock-time { letter-spacing: .05em; }"></textarea><button id="applyCustomCss" class="small-action">Apply CSS</button></div>
             <div class="setting-card"><h2>Configuration</h2><p>Export your settings to a JSON file or import a previously saved backup.</p><div class="button-row"><button id="exportSettings" class="small-action">Export settings</button><label class="small-action file-button" for="importSettingsFile">Import settings</label><input id="importSettingsFile" type="file" accept="application/json" hidden></div></div>
-            <div class="setting-card"><h2>System information</h2><p>Home Center 0.5 · webOS TV prototype · Up to 6 shortcuts · Local settings</p><p class="muted">The app does not replace the default HOME screen or change TV power settings yet.</p></div>
+            <div class="setting-card"><h2>System information</h2><p>Home Center 0.7.0 · webOS TV app · Up to 6 shortcuts · Local settings</p><p class="muted">The default LG HOME button and TV power controls are not changed by this app package.</p></div>
           </section>
         </div>
         <div class="settings-actions"><span id="saveState">Settings are saved automatically on this device.</span><button id="doneSettings" class="primary-action">Done</button></div>

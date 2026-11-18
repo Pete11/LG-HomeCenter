@@ -1,19 +1,31 @@
 $ErrorActionPreference = 'Stop'
+
 $ProjectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$AppDir = Join-Path $ProjectRoot 'app'
-$DistDir = Join-Path $ProjectRoot 'dist'
+$AppPath = Join-Path $ProjectRoot 'app'
+$LibraryDir = Join-Path $AppPath 'webOSTVjs-1.2.13'
+$LibraryPath = Join-Path $LibraryDir 'webOSTV.js'
+$ZipPath = Join-Path $env:TEMP 'webOSTVjs-1.2.13.zip'
+$ExtractPath = Join-Path $env:TEMP 'webOSTVjs-1.2.13'
+$DistPath = Join-Path $ProjectRoot 'dist'
 
 if (-not (Get-Command ares-package -ErrorAction SilentlyContinue)) {
-    Write-Error 'ares-package was not found. Install webOS TV CLI and reopen PowerShell.'
+    throw 'webOS CLI is missing. Install it with: npm install -g @webos-tools/cli@3.2.6'
 }
-if (-not (Test-Path (Join-Path $AppDir 'appinfo.json'))) {
-    Write-Error "appinfo.json is missing from $AppDir"
+if (-not (Test-Path $LibraryPath)) {
+    Write-Host 'Downloading the official LG webOSTV.js library...'
+    Invoke-WebRequest -Uri 'https://webostv.developer.lge.com/assets/library/webOSTVjs-1.2.13.zip' -OutFile $ZipPath
+    if (Test-Path $ExtractPath) { Remove-Item $ExtractPath -Recurse -Force }
+    Expand-Archive -Path $ZipPath -DestinationPath $ExtractPath -Force
+    $Found = Get-ChildItem $ExtractPath -Recurse -File | Where-Object { $_.Name -ieq 'webOSTV.js' } | Select-Object -First 1
+    if (-not $Found) { throw 'webOSTV.js was not found in the official LG archive.' }
+    New-Item -ItemType Directory -Path $LibraryDir -Force | Out-Null
+    Copy-Item $Found.FullName $LibraryPath -Force
 }
-New-Item -ItemType Directory -Force -Path $DistDir | Out-Null
-Push-Location $ProjectRoot
-try {
-    ares-package $AppDir -o $DistDir
-    if ($LASTEXITCODE -ne 0) { throw "ares-package failed with exit code $LASTEXITCODE" }
-    Write-Host "IPK package created at: $DistDir" -ForegroundColor Green
-}
-finally { Pop-Location }
+
+node --check (Join-Path $AppPath 'app.js')
+$null = Get-Content (Join-Path $AppPath 'appinfo.json') -Raw | ConvertFrom-Json
+if (-not (Test-Path (Join-Path $AppPath 'assets/wallpapers/alpine-lake-4k.jpg'))) { throw 'Bundled wallpaper is missing.' }
+New-Item -ItemType Directory -Path $DistPath -Force | Out-Null
+ares-package $AppPath -o $DistPath
+Write-Host "IPK package created in: $DistPath" -ForegroundColor Green
+Get-ChildItem $DistPath -Filter '*.ipk'

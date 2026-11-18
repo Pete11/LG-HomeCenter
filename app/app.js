@@ -14,15 +14,19 @@
     pixelShift: false, idleDim: true, screensaverEnabled: true, screensaverDelay: 5, screensaverMode: 'clock',
     autoStandby: 'off', scheduledPowerOffEnabled: false, scheduledPowerOff: '01:00', customCss: '', wallpaperUrl: ''
   };
+  const DEFAULT_WALLPAPER = 'assets/wallpapers/alpine-lake-4k.jpg';
+  // Bundled images are always available offline. Online sources are optional and are checked before applying.
   const WALLPAPER_PRESETS = [
-    { id: 'nature-waterfall', title: 'Mountain Waterfall', category: 'nature', resolution: '3840 × 2160', source: 'WallpapersCraft', url: 'https://wallpaperscraft.com/download/mountains_waterfall_aerial_view_148198/3840x2160' },
-    { id: 'nature-mountain-lake', title: 'Mountain Lake', category: 'nature', resolution: '3840 × 2160', source: 'WallpapersCraft', url: 'https://wallpaperscraft.com/download/mountain_lake_forest_150577/3840x2160' },
-    { id: 'nature-lake-forest', title: 'Lake & Forest', category: 'nature', resolution: '3840 × 2160', source: 'WallpapersCraft', url: 'https://wallpaperscraft.com/download/lake_mountains_forest_152659/3840x2160' },
-    { id: 'nature-waterfall-rocks', title: 'Waterfall & Rocks', category: 'nature', resolution: '3840 × 2160', source: 'WallpapersCraft', url: 'https://wallpaperscraft.com/download/waterfall_body_of_water_water_203016/3840x2160' },
-    { id: 'cinema-blade-runner', title: 'Blade Runner 2049', category: 'cinema', resolution: '3840 × 2160', source: 'Wallpapers Den', url: 'https://images.wallpapersden.com/image/download/blade-runner-2049-still_amxtZ2aUmZqaraWkpJRobWllrWdma2U.jpg' },
-    { id: 'cinema-interstellar', title: 'Interstellar · Ice Planet', category: 'cinema', resolution: '3840 × 2160', source: 'Alpha Coders', url: 'https://images3.alphacoders.com/551/551456.jpg' },
-    { id: 'cinema-knock-cabin', title: 'Knock at the Cabin', category: 'cinema', resolution: '3840 × 2400 · 5K', source: '10Wallpaper', url: 'https://www.10wallpaper.com/wallpaper/3840x2400/2305/Knock_at_the_Cabin_2023_Films_5K_Poster_3840x2400.jpg' },
-    { id: 'cinema-blade-runner-8k', title: 'Blade Runner 2049 · 8K', category: 'cinema', resolution: '7680 × 4320 · 8K', source: 'Wallpapers Den', url: 'https://images.wallpapersden.com/image/download/ryan-gosling-blade-runner-2049-still_am5sbW2UmZqaraWkpJRsa21lrWloZ2U.jpg' }
+    { id: 'nature-alpine-bundled', title: 'Alpine Lake · Included', category: 'nature', resolution: '3840 × 2160 · bundled', source: 'Included with Home Center', url: 'assets/wallpapers/alpine-lake-4k.jpg', preview: 'assets/wallpapers/alpine-lake-thumb.jpg', bundled: true },
+    { id: 'nature-mountain-peaks', title: 'Mountain Peaks & Lake', category: 'nature', resolution: '3840 × 2160 · 4K', source: 'WallpapersCraft · online', url: 'https://images.wallpaperscraft.com/image/single/mountains_peaks_lake_117046_3840x2160.jpg' },
+    { id: 'nature-forest-waterfall', title: 'Serene Forest Waterfall', category: 'nature', resolution: '3840 × 2160 · 4K', source: 'Wallpaper Abyss · online', url: 'https://images8.alphacoders.com/787/787324.jpg' },
+    { id: 'nature-rainforest-waterfall', title: 'Rainforest Waterfall', category: 'nature', resolution: '2880 × 1620 · QHD+', source: 'WallpapersWide · online', url: 'https://wallpaperswide.com/download/rainforest_waterfall-wallpaper-2880x1620.jpg' },
+    { id: 'cinema-noir-bundled', title: 'Neo-Noir City · Included', category: 'cinema', resolution: '3840 × 2160 · vector', source: 'Included with Home Center', url: 'assets/wallpapers/neo-noir-city.svg', bundled: true },
+    { id: 'cinema-poster-wall-bundled', title: 'Original Poster Wall · Included', category: 'cinema', resolution: '3840 × 2160 · vector', source: 'Included with Home Center', url: 'assets/wallpapers/poster-wall.svg', bundled: true },
+    { id: 'cinema-poster-mosaic', title: 'Movie Poster Mosaic', category: 'cinema', resolution: 'Online image · resolution varies', source: 'Wallpapers.com · online', url: 'https://wallpapers.com/images/hd/collage-of-movie-posters-g2fdqahxlakaa7yq.jpg' },
+    { id: 'cinema-sci-fi-city', title: 'Sci-Fi Night City', category: 'cinema', resolution: '4K UHD · online', source: 'UHD Paper · online', url: 'https://2.bp.blogspot.com/-DT9KBjeJx9M/XR76sWaXbVI/AAAAAAAAELA/Ppuu40yiuVcze05K0kryYugcHO5lGB4hACKgBGAs/w0/sci-fi-night-city-cityscape-uhdpaper.com-4K-141.jpg' },
+    { id: 'cinema-blade-runner', title: 'Blade Runner 2049 · Still', category: 'cinema', resolution: 'Online image · resolution varies', source: 'Wallpapers Den · online', url: 'https://images.wallpapersden.com/image/download/blade-runner-2049-still_amxtZ2aUmZqaraWkpJRobWllrWdma2U.jpg' },
+    { id: 'cinema-interstellar', title: 'Interstellar · Ice Planet', category: 'cinema', resolution: 'Online image · resolution varies', source: 'Alpha Coders · online', url: 'https://images3.alphacoders.com/551/551456.jpg' }
   ];
   let installedApps = [];
   let serviceRequests = [];
@@ -187,12 +191,76 @@
     if (request) serviceRequests.push(request);
     return request;
   }
+  function getCommandOutput(response) {
+    if (response && typeof response.stdoutString === 'string') return response.stdoutString;
+    if (response && response.stdoutBytes) {
+      try { return atob(response.stdoutBytes); } catch (_) { return String(response.stdoutBytes); }
+    }
+    return '';
+  }
   function parseCommandJson(output) {
     const text = String(output || '').trim();
-    if (!text) throw new Error('The TV returned an empty app list.');
+    if (!text) throw new Error('The TV returned an empty response.');
     const first = text.indexOf('{'); const last = text.lastIndexOf('}');
-    if (first < 0 || last <= first) throw new Error(text.slice(0, 260) || 'Could not read the app list.');
+    if (first < 0 || last <= first) throw new Error(text.slice(0, 260) || 'Could not read the TV response.');
     return JSON.parse(text.slice(first, last + 1));
+  }
+  function shellQuote(value) {
+    return "'" + String(value).replace(/'/g, "'\\''") + "'";
+  }
+  function iconMime(path) {
+    const value = String(path || '').toLowerCase().split('?')[0];
+    if (value.endsWith('.jpg') || value.endsWith('.jpeg')) return 'image/jpeg';
+    if (value.endsWith('.svg')) return 'image/svg+xml';
+    if (value.endsWith('.webp')) return 'image/webp';
+    if (value.endsWith('.gif')) return 'image/gif';
+    return 'image/png';
+  }
+  function normalizeIconPath(item, value) {
+    let path = String(value || '').trim();
+    if (!path) return '';
+    if (/^(https?:|data:image\/)/i.test(path)) return path;
+    if (path.startsWith('file://')) path = path.slice(7);
+    if (!path.startsWith('/')) {
+      const folder = String(item.folderPath || item.appPath || '').replace(/\/$/, '');
+      if (folder) path = folder + '/' + path;
+    }
+    return path;
+  }
+  function resolveInstalledIcon(item, callback) {
+    const candidates = [item.largeIcon, item.icon, item.mediumLargeIcon, item.miniicon]
+      .filter(value => typeof value === 'string' && value.trim());
+    let position = 0;
+    const tryNext = () => {
+      if (position >= candidates.length) { callback(''); return; }
+      const original = candidates[position++];
+      const path = normalizeIconPath(item, original);
+      if (!path) { tryNext(); return; }
+      if (/^(https?:|data:image\/)/i.test(path)) { callback(path); return; }
+      const command = 'if [ -r ' + shellQuote(path) + ' ]; then base64 ' + shellQuote(path) + " 2>/dev/null | tr -d '\r\n'; else exit 2; fi";
+      requestWebOSService('luna://org.webosbrew.hbchannel.service', 'exec', { command: command }, function (response) {
+        const encoded = getCommandOutput(response).replace(/\s+/g, '');
+        if (encoded.length > 80 && /^[A-Za-z0-9+/=]+$/.test(encoded)) {
+          callback('data:' + iconMime(path) + ';base64,' + encoded);
+        } else tryNext();
+      }, tryNext);
+    };
+    tryNext();
+  }
+  function hydrateAssignedIcons() {
+    settings.apps.forEach((app, index) => {
+      if (app.iconSrc || !app.appId) return;
+      const item = installedApps.find(entry => entry.id === app.appId);
+      if (!item) return;
+      resolveInstalledIcon(item, function (iconSrc) {
+        if (!iconSrc || !settings.apps[index] || settings.apps[index].appId !== item.id) return;
+        settings.apps[index].iconSrc = iconSrc;
+        settings.apps[index].iconColor = item.iconColor || item.bgColor || '';
+        saveSettings(); renderApps();
+        const preview = document.querySelector('.app-picker-preview[data-index="' + index + '"]');
+        if (preview) renderAppIconPreview(preview, settings.apps[index]);
+      });
+    });
   }
   function loadInstalledApps() {
     $('installedAppsStatus').textContent = 'Reading the installed app list…';
@@ -202,19 +270,30 @@
       $('loadInstalledApps').disabled = false;
       try {
         if (response.error) throw new Error(String(response.error));
-        const payload = parseCommandJson(response.stdoutString || (response.stdoutBytes && atob(response.stdoutBytes)) || '');
+        const payload = parseCommandJson(getCommandOutput(response));
         const entries = Array.isArray(payload.launchPoints) ? payload.launchPoints : (Array.isArray(payload.apps) ? payload.apps : []);
         const unique = new Map();
         entries.forEach(item => {
           const id = String(item.id || item.appId || item.appid || '').trim();
           if (!id || id === 'com.homecenter.launcher') return;
-          if (!unique.has(id)) unique.set(id, { id: id, title: String(item.title || item.appName || item.name || id).trim() });
+          if (!unique.has(id)) unique.set(id, {
+            id: id,
+            launchPointId: String(item.launchPointId || id),
+            title: String(item.title || item.appName || item.name || id).trim(),
+            icon: String(item.icon || ''),
+            largeIcon: String(item.largeIcon || ''),
+            mediumLargeIcon: String(item.mediumLargeIcon || ''),
+            miniicon: String(item.miniicon || ''),
+            folderPath: String(item.folderPath || item.appPath || ''),
+            iconColor: String(item.iconColor || item.bgColor || '')
+          });
         });
         installedApps = Array.from(unique.values()).sort((a,b) => a.title.localeCompare(b.title));
         if (!installedApps.length) throw new Error('No launchable apps were returned. Check Homebrew root access.');
-        $('installedAppsStatus').textContent = installedApps.length + ' apps found on this TV.';
+        $('installedAppsStatus').textContent = installedApps.length + ' apps found on this TV. Select an app to load its original icon.';
         renderAppEditor();
-        toast('Installed apps loaded. Select an app for each shortcut.');
+        hydrateAssignedIcons();
+        toast('Installed apps loaded. Choose an app for each shortcut.');
       } catch (error) {
         $('installedAppsStatus').textContent = 'Could not load installed apps.';
         toast('App list error: ' + (error.message || 'Unknown error'));
@@ -227,29 +306,61 @@
     });
   }
   function renderWallpaperGallery() {
-    const gallery = $('wallpaperGallery'); if (!gallery) return;
+    const gallery = $('wallpaperGallery');
+    if (!gallery) return;
     const category = $('wallpaperCategory').value || 'nature';
     gallery.innerHTML = '';
     WALLPAPER_PRESETS.filter(item => item.category === category).forEach(item => {
-      const card = document.createElement('button'); card.type = 'button'; card.className = 'wallpaper-card';
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'wallpaper-card';
+      card.dataset.wallpaperId = item.id;
       if (settings.wallpaperUrl === item.url) card.classList.add('selected');
-      const image = document.createElement('img'); image.src = item.url; image.alt = item.title; image.loading = 'lazy'; image.decoding = 'async';
-      const title = document.createElement('span'); title.className = 'wallpaper-card-title'; title.textContent = item.title;
-      const meta = document.createElement('span'); meta.className = 'wallpaper-card-meta'; meta.textContent = item.resolution + ' · ' + item.source;
+
+      const image = document.createElement('img');
+      image.src = item.preview || item.url;
+      image.alt = item.title;
+      image.loading = 'lazy';
+      image.decoding = 'async';
+      image.referrerPolicy = 'no-referrer';
+      image.addEventListener('error', () => {
+        if (image.parentNode) {
+          const fallback = document.createElement('span');
+          fallback.className = 'wallpaper-preview-fallback';
+          fallback.textContent = item.bundled ? 'PREVIEW UNAVAILABLE' : 'ONLINE PREVIEW UNAVAILABLE';
+          image.replaceWith(fallback);
+        }
+      }, { once: true });
+
+      const title = document.createElement('span');
+      title.className = 'wallpaper-card-title';
+      title.textContent = item.title;
+      const meta = document.createElement('span');
+      meta.className = 'wallpaper-card-meta';
+      meta.textContent = item.resolution + ' · ' + item.source;
       card.append(image, title, meta);
-      card.addEventListener('click', () => {
+
+      card.addEventListener('click', async () => {
+        $('wallpaperGalleryStatus').textContent = 'Loading ' + item.title + '…';
+        card.disabled = true;
+        const applied = await applyWallpaperUrl(item.url);
+        card.disabled = false;
+        if (!applied) {
+          $('wallpaperGalleryStatus').textContent = 'Could not load this image. Try a bundled wallpaper or use a direct image URL.';
+          toast('Wallpaper unavailable: ' + item.title);
+          return;
+        }
         settings.wallpaperUrl = item.url;
-        $('wallpaperUrl').value = item.url;
-        localStorage.removeItem('homecenter.wallpaper.blob');
-        applyWallpaperUrl(item.url); saveSettings();
-        gallery.querySelectorAll('.wallpaper-card').forEach(node => node.classList.remove('selected'));
-        card.classList.add('selected');
-        $('wallpaperGalleryStatus').textContent = item.title + ' selected (' + item.resolution + ').';
+        await deleteWallpaperBlob();
+        $('wallpaperUrl').value = item.bundled ? '' : item.url;
+        saveSettings();
+        gallery.querySelectorAll('.wallpaper-card').forEach(node => node.classList.toggle('selected', node === card));
+        $('wallpaperGalleryStatus').textContent = item.title + ' applied. ' + item.resolution + '.';
         toast('Wallpaper applied: ' + item.title);
       });
       gallery.appendChild(card);
     });
-    $('wallpaperGalleryStatus').textContent = 'Choose a preset or use your own image below. External images require internet access.';
+    $('wallpaperGalleryStatus').textContent = 'Bundled wallpapers work offline. Online presets require an internet connection and a direct image URL.';
   }
   function renderApps() {
     const row = $('appRow'); row.innerHTML = '';
@@ -258,14 +369,18 @@
     row.style.setProperty('--app-count', count);
     settings.apps.forEach((app, index) => {
       const button = document.createElement('button'); button.className = 'app-tile'; button.type = 'button'; button.dataset.index = String(index);
-      const symbol = document.createElement('span'); symbol.className = 'app-symbol symbol-' + safeClass(app.kind); symbol.textContent = app.symbol === 'prime' ? '' : (app.symbol || '◇');
-      if (app.kind === 'prime') { symbol.innerHTML = 'prime<br><small>video</small>'; }
+      const fallback = document.createElement('span'); fallback.className = 'app-symbol symbol-' + safeClass(app.kind); fallback.textContent = app.symbol === 'prime' ? '' : (app.symbol || '◇');
+      if (app.kind === 'prime') fallback.innerHTML = 'prime<br><small>video</small>';
+      if (app.iconColor && /^#[0-9a-f]{3,8}$/i.test(app.iconColor)) button.style.setProperty('--app-icon-bg', app.iconColor);
+      if (app.iconSrc) {
+        const image = document.createElement('img'); image.className = 'app-icon-image'; image.alt = (app.name || 'Application') + ' icon'; image.src = app.iconSrc;
+        image.addEventListener('error', () => { image.remove(); if (!button.contains(fallback)) button.insertBefore(fallback, button.firstChild); });
+        button.appendChild(image);
+      } else button.appendChild(fallback);
       const label = document.createElement('span'); label.className = 'app-label'; label.textContent = app.name || ('Shortcut ' + (index + 1));
-      button.append(symbol, label); button.setAttribute('aria-label', 'Open ' + (app.name || ('Shortcut ' + (index + 1))));
+      button.appendChild(label); button.setAttribute('aria-label', 'Open ' + (app.name || ('Shortcut ' + (index + 1))));
       button.addEventListener('click', () => launchApp(index));
       button.addEventListener('focus', () => setFocus(index));
-      // LG Magic Remote exposes its air-mouse pointer as mouse/pointer events.
-      // Hovering a tile moves the active selection; OK/Enter launches it.
       button.addEventListener('pointerenter', () => focusTileFromPointer(button));
       button.addEventListener('mouseenter', () => focusTileFromPointer(button));
       row.appendChild(button);
@@ -290,14 +405,32 @@
     const app = settings.apps[index];
     if (!app || !String(app.appId || '').trim()) { toast('This shortcut has no app assigned. Open Settings → Shortcuts and select an installed app.'); return; }
     const appId = String(app.appId).trim();
+    const payload = JSON.stringify({ id: appId, params: {} });
+    const command = 'luna-send -n 1 -f luna://com.webos.applicationManager/launch ' + shellQuote(payload);
+    // Use Homebrew's root command bridge first. It avoids application-launch
+    // permission differences between webOS TV firmware builds.
+    requestWebOSService('luna://org.webosbrew.hbchannel.service', 'exec', { command: command }, function (response) {
+      try {
+        if (response.error) throw new Error(String(response.error));
+        const output = getCommandOutput(response);
+        if (output.trim()) {
+          const result = parseCommandJson(output);
+          if (result.returnValue === false) throw new Error(result.errorText || result.errorCode || 'Application Manager rejected the app ID.');
+        }
+        toast('Opening ' + (app.name || appId) + '…');
+      } catch (error) {
+        launchAppDirect(appId, app.name, error);
+      }
+    }, function (error) { launchAppDirect(appId, app.name, error); });
+  }
+  function launchAppDirect(appId, appName, previousError) {
     if (window.webOS && webOS.service && typeof webOS.service.request === 'function') {
       requestWebOSService('luna://com.webos.applicationManager', 'launch', { id: appId, params: {} }, function (response) {
-        if (response.returnValue === false) {
-          toast('Launch failed (' + (response.errorCode || 'webOS') + '): ' + (response.errorText || 'Application Manager rejected the app ID.'));
-        }
+        if (response.returnValue === false) toast('Launch failed: ' + (response.errorText || 'Application Manager rejected the app ID.'));
+        else toast('Opening ' + (appName || appId) + '…');
       }, function (error) {
-        toast('Could not launch ' + (app.name || appId) + ': ' + (error.errorText || error.message || 'webOS service error'));
-        console.warn('Application launch failed:', error);
+        toast('Could not launch ' + (appName || appId) + ': ' + (error.errorText || error.message || (previousError && previousError.message) || 'webOS service error'));
+        console.warn('Application launch failed:', error, previousError);
       });
       return;
     }
@@ -305,12 +438,12 @@
       const bridge = new window.PalmServiceBridge();
       bridge.onservicecallback = function (message) {
         try { const result = JSON.parse(message); if (result.returnValue === false) toast('Launch failed: ' + (result.errorText || 'webOS error')); }
-        catch (_) { toast('App launch request sent.'); }
+        catch (_) { toast('Launch request sent.'); }
       };
       bridge.call('luna://com.webos.applicationManager/launch', JSON.stringify({ id: appId, params: {} }));
       return;
     }
-    toast('webOS launch API is unavailable. This build needs the official webOSTV.js runtime.');
+    toast('Could not launch ' + (appName || appId) + '. Homebrew root service and webOS launch API are unavailable.');
   }
   function openSettings(tab) {
     closeScreensaver(); $('settingsOverlay').classList.remove('hidden'); $('settingsOverlay').setAttribute('aria-hidden', 'false');
@@ -326,6 +459,18 @@
     document.querySelectorAll('.settings-page').forEach(page => page.classList.toggle('active', page.dataset.page === name));
     const title = document.querySelector('.settings-tab.active'); $('settingsTitle').textContent = title ? title.textContent : 'General';
   }
+  function renderAppIconPreview(container, app) {
+    container.innerHTML = '';
+    if (app && app.iconSrc) {
+      const image = document.createElement('img'); image.alt = (app.name || 'Application') + ' icon'; image.src = app.iconSrc;
+      image.addEventListener('error', () => { container.textContent = (app.name || '?').slice(0, 1).toUpperCase(); });
+      container.appendChild(image);
+      if (app.iconColor && /^#[0-9a-f]{3,8}$/i.test(app.iconColor)) container.style.backgroundColor = app.iconColor;
+    } else {
+      container.textContent = app && app.name ? app.name.slice(0, 1).toUpperCase() : '◇';
+      container.style.backgroundColor = app && app.iconColor && /^#[0-9a-f]{3,8}$/i.test(app.iconColor) ? app.iconColor : '';
+    }
+  }
   function renderAppEditor() {
     const editor = $('appEditor'); editor.innerHTML = '';
     settings.apps.forEach((app, index) => {
@@ -333,28 +478,63 @@
       const header = document.createElement('div'); header.className = 'app-edit-head';
       const label = document.createElement('label'); label.textContent = 'SHORTCUT ' + (index + 1);
       const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'remove-shortcut'; remove.textContent = '×'; remove.title = 'Remove shortcut'; remove.setAttribute('aria-label', 'Remove shortcut ' + (index + 1));
+      const pickerLine = document.createElement('div'); pickerLine.className = 'app-picker-line';
+      const preview = document.createElement('div'); preview.className = 'app-picker-preview'; preview.dataset.index = String(index); renderAppIconPreview(preview, app);
       const picker = document.createElement('select'); picker.className = 'installed-app-picker'; picker.setAttribute('aria-label', 'Select installed app for shortcut ' + (index + 1));
-      const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = installedApps.length ? 'Select an installed app…' : 'Load installed apps from TV first…'; picker.appendChild(placeholder);
-      installedApps.forEach(item => { const option = document.createElement('option'); option.value = item.id; option.textContent = item.title + '  ·  ' + item.id; picker.appendChild(option); });
-      if (app.appId && !installedApps.some(item => item.id === app.appId)) { const current = document.createElement('option'); current.value = app.appId; current.textContent = 'Current ID · ' + app.appId; picker.appendChild(current); }
+      const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = installedApps.length ? 'Choose an installed app…' : 'Load installed apps from TV first…'; picker.appendChild(placeholder);
+      installedApps.forEach(item => { const option = document.createElement('option'); option.value = item.id; option.textContent = item.title; option.title = item.id; picker.appendChild(option); });
+      if (app.appId && !installedApps.some(item => item.id === app.appId)) { const current = document.createElement('option'); current.value = app.appId; current.textContent = 'Current app · ' + app.appId; picker.appendChild(current); }
       picker.value = app.appId || '';
       const fields = document.createElement('div'); fields.className = 'app-edit-fields';
       const name = document.createElement('input'); name.type = 'text'; name.maxLength = 22; name.value = app.name || ''; name.placeholder = 'Tile label'; name.setAttribute('aria-label', 'Shortcut name ' + (index + 1));
       const id = document.createElement('input'); id.type = 'text'; id.maxLength = 120; id.value = app.appId || ''; id.placeholder = 'Or enter app ID manually'; id.setAttribute('aria-label', 'App ID ' + (index + 1));
       picker.addEventListener('change', () => {
         const selected = installedApps.find(item => item.id === picker.value);
-        settings.apps[index].appId = picker.value; id.value = picker.value;
-        if (selected) { settings.apps[index].name = selected.title.slice(0,22); name.value = settings.apps[index].name; }
-        saveSettings(); renderApps(); toast(selected ? selected.title + ' assigned to shortcut.' : 'Shortcut app cleared.');
+        const current = settings.apps[index];
+        current.appId = picker.value;
+        current.iconSrc = '';
+        current.iconColor = selected ? selected.iconColor : '';
+        if (selected) {
+          current.name = selected.title.slice(0,22); name.value = current.name; id.value = selected.id;
+          current.launchPointId = selected.launchPointId || selected.id;
+          renderAppIconPreview(preview, current);
+          resolveInstalledIcon(selected, function (iconSrc) {
+            if (!settings.apps[index] || settings.apps[index].appId !== selected.id) return;
+            if (iconSrc) {
+              selected.iconSrc = iconSrc;
+              settings.apps[index].iconSrc = iconSrc;
+              settings.apps[index].iconColor = selected.iconColor || '';
+              renderAppIconPreview(preview, settings.apps[index]);
+              renderApps();
+            } else {
+              toast('The app was assigned, but its icon could not be read from the TV.');
+            }
+            saveSettings();
+          });
+        } else {
+          current.name = name.value.trim() || ('Shortcut ' + (index + 1));
+          current.launchPointId = '';
+          renderAppIconPreview(preview, current);
+        }
+        saveSettings(); renderApps();
+        toast(selected ? selected.title + ' assigned to shortcut.' : 'Shortcut app cleared.');
       });
-      name.addEventListener('change', () => { settings.apps[index].name = name.value.trim() || ('Shortcut ' + (index + 1)); saveSettings(); renderApps(); });
-      id.addEventListener('change', () => { settings.apps[index].appId = id.value.trim(); picker.value = settings.apps[index].appId; saveSettings(); });
+      name.addEventListener('change', () => { settings.apps[index].name = name.value.trim() || ('Shortcut ' + (index + 1)); saveSettings(); renderApps(); renderAppIconPreview(preview, settings.apps[index]); });
+      id.addEventListener('change', () => {
+        settings.apps[index].appId = id.value.trim();
+        const selected = installedApps.find(item => item.id === settings.apps[index].appId);
+        if (selected) {
+          settings.apps[index].name = selected.title.slice(0,22); name.value = settings.apps[index].name;
+          resolveInstalledIcon(selected, iconSrc => { if (iconSrc && settings.apps[index] && settings.apps[index].appId === selected.id) { settings.apps[index].iconSrc = iconSrc; renderAppIconPreview(preview, settings.apps[index]); renderApps(); saveSettings(); } });
+        }
+        picker.value = settings.apps[index].appId; saveSettings(); renderApps();
+      });
       remove.addEventListener('click', () => {
         if (settings.apps.length <= 1) { toast('At least one shortcut must remain in the dock.'); return; }
         settings.apps.splice(index, 1); currentFocus = Math.min(currentFocus, settings.apps.length - 1);
         saveSettings(); renderAppEditor(); renderApps(); updateShortcutCount(); toast('Shortcut removed.');
       });
-      header.append(label, remove); fields.append(name, id); row.append(header, picker, fields); editor.appendChild(row);
+      header.append(label, remove); pickerLine.append(preview, picker); fields.append(name, id); row.append(header, pickerLine, fields); editor.appendChild(row);
     });
     updateShortcutCount();
   }
@@ -398,18 +578,67 @@
     ['screensaverDelay','screensaverMode','autoStandby','scheduledPowerOff'].forEach(id => $(id).addEventListener('change', () => { settings[id] = $(id).value; saveSettings(); resetIdleTimer(); }));
     $('glassTint').addEventListener('change', () => { settings.glassTint = $('glassTint').value === 'light' ? 'light' : 'dark'; applyVisualSettings(); saveSettings(); toast(settings.glassTint === 'light' ? 'Frosted white glass enabled.' : 'Smoked black glass enabled.'); });
     $('applyCustomCss').addEventListener('click', () => { settings.customCss = $('customCss').value; applyCustomCss(settings.customCss); saveSettings(); toast('Custom CSS applied.'); });
-    $('applyWallpaperUrl').addEventListener('click', () => { const url = $('wallpaperUrl').value.trim(); if (url && /^https?:\/\//i.test(url)) { settings.wallpaperUrl = url; localStorage.removeItem('homecenter.wallpaper.blob'); applyWallpaperUrl(url); saveSettings(); toast('Wallpaper updated.'); } else toast('Enter a valid HTTP(S) URL.'); });
+    $('applyWallpaperUrl').addEventListener('click', async () => {
+      const url = $('wallpaperUrl').value.trim();
+      if (!url || !/^https?:\/\//i.test(url)) { toast('Enter a direct HTTPS or HTTP image URL.'); return; }
+      $('applyWallpaperUrl').disabled = true;
+      const applied = await applyWallpaperUrl(url);
+      $('applyWallpaperUrl').disabled = false;
+      if (!applied) { toast('Image could not be loaded. Use a direct .jpg, .png or .webp image URL.'); return; }
+      settings.wallpaperUrl = url;
+      await deleteWallpaperBlob();
+      saveSettings();
+      toast('Wallpaper updated.');
+    });
     $('wallpaperFile').addEventListener('change', handleWallpaperFile);
-    $('clearWallpaper').addEventListener('click', async () => { settings.wallpaperUrl = ''; saveSettings(); await deleteWallpaperBlob(); applyWallpaperUrl(''); toast('Default wallpaper restored.'); });
+    $('clearWallpaper').addEventListener('click', async () => {
+      await deleteWallpaperBlob();
+      settings.wallpaperUrl = DEFAULT_WALLPAPER;
+      $('wallpaperUrl').value = '';
+      const applied = await applyWallpaperUrl(DEFAULT_WALLPAPER);
+      saveSettings();
+      toast(applied ? 'Default bundled wallpaper restored.' : 'Could not load the bundled wallpaper.');
+    });
     $('exportSettings').addEventListener('click', exportSettings);
     $('importSettingsFile').addEventListener('change', importSettings);
   }
   function applyWallpaperUrl(url) {
-    if (wallpaperObjectUrl) { URL.revokeObjectURL(wallpaperObjectUrl); wallpaperObjectUrl = null; }
     const home = $('home');
-    if (!url) { home.classList.remove('has-wallpaper'); home.style.removeProperty('--wallpaper-image'); $('screensaver').style.removeProperty('--screensaver-image'); return; }
-    const safeUrl = url.replace(/["\\]/g, ''); home.style.setProperty('--wallpaper-image', 'url("' + safeUrl + '")'); home.classList.add('has-wallpaper');
-    $('screensaver').style.setProperty('--screensaver-image', 'url("' + safeUrl + '")');
+    const imageElement = $('wallpaperImage');
+    const screensaverBg = document.querySelector('.screensaver-bg');
+    const requestedUrl = String(url || '').trim();
+
+    if (!requestedUrl) {
+      home.classList.remove('has-wallpaper');
+      imageElement.removeAttribute('src');
+      if (screensaverBg) screensaverBg.style.removeProperty('background-image');
+      if (wallpaperObjectUrl) { URL.revokeObjectURL(wallpaperObjectUrl); wallpaperObjectUrl = null; }
+      return Promise.resolve(true);
+    }
+
+    return new Promise(resolve => {
+      const candidate = new Image();
+      let settled = false;
+      const loadTimeout = setTimeout(() => finish(false), 18000);
+      const finish = (ok) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(loadTimeout);
+        if (ok) {
+          const previousObjectUrl = wallpaperObjectUrl;
+          imageElement.src = requestedUrl;
+          home.classList.add('has-wallpaper');
+          if (screensaverBg) screensaverBg.style.backgroundImage = 'url(' + JSON.stringify(requestedUrl) + ')';
+          wallpaperObjectUrl = requestedUrl.indexOf('blob:') === 0 ? requestedUrl : null;
+          if (previousObjectUrl && previousObjectUrl !== wallpaperObjectUrl) URL.revokeObjectURL(previousObjectUrl);
+        }
+        resolve(ok);
+      };
+      candidate.onload = () => finish(candidate.naturalWidth > 0 && candidate.naturalHeight > 0);
+      candidate.onerror = () => finish(false);
+      candidate.src = requestedUrl;
+      if (candidate.complete && candidate.naturalWidth > 0) finish(true);
+    });
   }
   function openDb() {
     if (dbPromise) return dbPromise;
@@ -431,21 +660,42 @@
     try { const db = await openDb(); return new Promise(resolve => { const tx = db.transaction('wallpaper', 'readwrite'); tx.objectStore('wallpaper').delete('current'); tx.oncomplete = resolve; tx.onerror = resolve; }); } catch (_) { /* no-op */ }
   }
   async function handleWallpaperFile(event) {
-    const file = event.target.files && event.target.files[0]; if (!file) return;
-    if (!file.type.startsWith('image/')) { toast('Select an image file.'); return; }
-    if (file.size > 12 * 1024 * 1024) { toast('Choose an image no larger than 12 MB.'); return; }
-    try { await saveWallpaperBlob(file); settings.wallpaperUrl = ''; saveSettings(); await showStoredWallpaper(); toast('Wallpaper saved locally.'); }
-    catch (error) { toast('Could not save the image to local storage.'); }
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    if (!file.type || !file.type.startsWith('image/')) { toast('Select an image file.'); event.target.value = ''; return; }
+    if (file.size > 24 * 1024 * 1024) { toast('Choose an image no larger than 24 MB.'); event.target.value = ''; return; }
+    const temporaryUrl = URL.createObjectURL(file);
+    const loaded = await applyWallpaperUrl(temporaryUrl);
+    if (!loaded) {
+      if (wallpaperObjectUrl !== temporaryUrl) URL.revokeObjectURL(temporaryUrl);
+      toast('The selected image could not be decoded by this TV.');
+      event.target.value = '';
+      return;
+    }
+    try {
+      await saveWallpaperBlob(file);
+      settings.wallpaperUrl = '';
+      $('wallpaperUrl').value = '';
+      saveSettings();
+      toast('Wallpaper saved on this TV.');
+    } catch (error) {
+      toast('Wallpaper is displayed, but local storage failed. Check available app storage.');
+      console.warn('Wallpaper storage failed:', error);
+    }
+    event.target.value = '';
   }
   async function showStoredWallpaper() {
     try {
       const blob = await getWallpaperBlob();
-      if (!blob) return;
-      if (wallpaperObjectUrl) URL.revokeObjectURL(wallpaperObjectUrl);
-      wallpaperObjectUrl = URL.createObjectURL(blob);
-      $('home').style.setProperty('--wallpaper-image', 'url("' + wallpaperObjectUrl + '")'); $('home').classList.add('has-wallpaper');
-      $('screensaver').style.setProperty('--screensaver-image', 'url("' + wallpaperObjectUrl + '")');
-    } catch (_) { /* wallpaper is optional */ }
+      if (!blob) return false;
+      const objectUrl = URL.createObjectURL(blob);
+      const applied = await applyWallpaperUrl(objectUrl);
+      if (!applied && wallpaperObjectUrl !== objectUrl) URL.revokeObjectURL(objectUrl);
+      return applied;
+    } catch (error) {
+      console.warn('Could not restore stored wallpaper:', error);
+      return false;
+    }
   }
   function exportSettings() {
     const data = JSON.stringify(settings, null, 2); const blob = new Blob([data], { type: 'application/json' });
@@ -463,7 +713,9 @@
         settings.apps = settings.apps.slice(0, 6);
         if (settings.apps.length && /^Shortcut 6$/i.test(String(settings.apps[settings.apps.length - 1].name || '')) && !settings.apps[settings.apps.length - 1].appId && settings.apps[settings.apps.length - 1].kind === 'custom') settings.apps.pop();
         if (!settings.apps.length) settings.apps = clone(DEFAULTS.apps);
-        saveSettings(); applyVisualSettings(); renderApps(); renderAppEditor(); hydrateSettingsForm(); scheduleWeather(); toast('Settings imported.');
+        saveSettings(); applyVisualSettings(); renderApps(); renderAppEditor(); hydrateSettingsForm(); scheduleWeather();
+        if (settings.wallpaperUrl) applyWallpaperUrl(settings.wallpaperUrl); else showStoredWallpaper();
+        renderWallpaperGallery(); toast('Settings imported.');
       }
       catch (_) { toast('Invalid JSON file.'); }
     }; reader.readAsText(file); event.target.value = '';
@@ -484,29 +736,130 @@
     const delay = Math.max(1, Number(settings.screensaverDelay) || 5) * 60000;
     idleTimer = setTimeout(showScreensaver, delay);
   }
+  function directionalKey(event) {
+    const keyNames = [event.key, event.keyIdentifier].filter(Boolean).map(value => String(value).toLowerCase());
+    const code = Number(event.keyCode || event.which || 0);
+    if (keyNames.some(key => ['arrowleft','left','leftarrow'].includes(key)) || code === 37) return 'left';
+    if (keyNames.some(key => ['arrowright','right','rightarrow'].includes(key)) || code === 39) return 'right';
+    if (keyNames.some(key => ['arrowup','up','uparrow'].includes(key)) || code === 38) return 'up';
+    if (keyNames.some(key => ['arrowdown','down','downarrow'].includes(key)) || code === 40) return 'down';
+    return '';
+  }
+  function visibleFocusable(scope) {
+    const selector = 'button:not(:disabled), select:not(:disabled), input:not(:disabled):not([type="hidden"]), textarea:not(:disabled), [tabindex="0"]';
+    return Array.from(scope.querySelectorAll(selector)).filter(element => {
+      if (element.closest('.hidden')) return false;
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && getComputedStyle(element).visibility !== 'hidden';
+    });
+  }
+  function moveFocusSpatial(direction, scope) {
+    const candidates = visibleFocusable(scope);
+    if (!candidates.length) return false;
+    const active = document.activeElement;
+    if (!active || !candidates.includes(active)) { candidates[0].focus(); return true; }
+    const a = active.getBoundingClientRect();
+    const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+    let best = null, bestScore = Infinity;
+    candidates.forEach(candidate => {
+      if (candidate === active) return;
+      const r = candidate.getBoundingClientRect();
+      const dx = r.left + r.width / 2 - ax;
+      const dy = r.top + r.height / 2 - ay;
+      const primary = direction === 'left' ? -dx : direction === 'right' ? dx : direction === 'up' ? -dy : dy;
+      const secondary = direction === 'left' || direction === 'right' ? Math.abs(dy) : Math.abs(dx);
+      if (primary <= 2) return;
+      const score = primary + secondary * 1.7 + (secondary > primary * 1.6 ? primary * 2 : 0);
+      if (score < bestScore) { bestScore = score; best = candidate; }
+    });
+    if (!best) {
+      // Wrap within a row/column when there is no element in the requested direction.
+      const others = candidates.filter(candidate => candidate !== active);
+      others.sort((left, right) => {
+        const l = left.getBoundingClientRect(), r = right.getBoundingClientRect();
+        const lc = direction === 'left' ? -l.right : direction === 'right' ? l.left : direction === 'up' ? -l.bottom : l.top;
+        const rc = direction === 'left' ? -r.right : direction === 'right' ? r.left : direction === 'up' ? -r.bottom : r.top;
+        return lc - rc;
+      });
+      best = others[0] || null;
+    }
+    if (!best) return false;
+    best.focus({ preventScroll: true });
+    if (best.scrollIntoView) best.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    return true;
+  }
+  function isEditableTarget(target) {
+    if (!target) return false;
+    const tag = String(target.tagName || '').toLowerCase();
+    return tag === 'textarea' || (tag === 'input' && !['checkbox','radio','range','button','file','submit'].includes(String(target.type || '').toLowerCase()));
+  }
   function handleKeyDown(event) {
     const inSettings = !$('settingsOverlay').classList.contains('hidden');
     const forecastVisible = !$('forecastOverlay').classList.contains('hidden');
     const saverVisible = !$('screensaver').classList.contains('hidden');
-    const isConfirm = event.key === 'Enter' || event.key === 'Accept' || [13, 23, 66].includes(event.keyCode);
+    const keyCode = Number(event.keyCode || event.which || 0);
+    const key = String(event.key || event.keyIdentifier || '').toLowerCase();
+    const direction = directionalKey(event);
+    const isConfirm = key === 'enter' || key === 'accept' || keyCode === 13 || keyCode === 23 || keyCode === 66;
+    const isBack = key === 'escape' || keyCode === 461 || keyCode === 27;
+
     if (saverVisible) { event.preventDefault(); closeScreensaver(); return; }
-    if (event.key === 'Escape' || event.keyCode === 461 || event.keyCode === 27) {
+    if (isBack) {
       if (forecastVisible) { event.preventDefault(); closeForecast(); }
       else if (inSettings) { event.preventDefault(); closeSettings(); }
       else { event.preventDefault(); openSettings('general'); }
       return;
     }
     if (forecastVisible) {
-      if (isConfirm && document.activeElement && document.activeElement.tagName === 'BUTTON') {
-        event.preventDefault(); document.activeElement.click();
+      if (direction) { event.preventDefault(); moveFocusSpatial(direction, $('forecastOverlay')); }
+      else if (isConfirm && document.activeElement && document.activeElement.tagName === 'BUTTON') { event.preventDefault(); document.activeElement.click(); }
+      return;
+    }
+    if (inSettings) {
+      const target = event.target || document.activeElement;
+      const tag = String(target && target.tagName || '').toLowerCase();
+      const type = String(target && target.type || '').toLowerCase();
+      // Let native selects and range controls consume their own adjustment arrows.
+      if (direction && !(tag === 'select' && (direction === 'up' || direction === 'down')) && !(type === 'range' && (direction === 'left' || direction === 'right')) && !(isEditableTarget(target) && (direction === 'left' || direction === 'right'))) {
+        event.preventDefault();
+        moveFocusSpatial(direction, $('settingsOverlay'));
+        return;
+      }
+      if (isConfirm && target && (target.tagName === 'BUTTON' || target.classList.contains('file-button'))) {
+        event.preventDefault(); target.click(); return;
       }
       return;
     }
-    if (inSettings) return;
-    if (event.key === 'ArrowRight' || event.keyCode === 39) { event.preventDefault(); setFocus((currentFocus + 1) % Math.max(1, tiles().length)); tiles()[currentFocus].focus(); }
-    else if (event.key === 'ArrowLeft' || event.keyCode === 37) { event.preventDefault(); setFocus((currentFocus + tiles().length - 1) % Math.max(1, tiles().length)); tiles()[currentFocus].focus(); }
-    else if (isConfirm && document.activeElement && document.activeElement.id === 'weatherDisplay') { event.preventDefault(); openForecast(); }
-    else if (isConfirm) { event.preventDefault(); launchApp(currentFocus); }
+
+    if (direction) {
+      const active = document.activeElement;
+      const tileIndex = active && active.classList && active.classList.contains('app-tile') ? Number(active.dataset.index) : -1;
+      if (tileIndex >= 0 && (direction === 'left' || direction === 'right')) {
+        event.preventDefault();
+        const next = (tileIndex + (direction === 'right' ? 1 : tiles().length - 1)) % Math.max(1, tiles().length);
+        setFocus(next); tiles()[next].focus(); return;
+      }
+      if (tileIndex >= 0 && direction === 'up') { event.preventDefault(); $('weatherDisplay').focus(); return; }
+      if (tileIndex >= 0 && direction === 'down') { event.preventDefault(); $('settingsButton').focus(); return; }
+      if ((active && active.id === 'weatherDisplay' && direction === 'down') || (active && active.id === 'settingsButton' && direction === 'up')) {
+        event.preventDefault(); if (tiles()[currentFocus]) tiles()[currentFocus].focus(); return;
+      }
+      if (active && active.id === 'weatherDisplay' && (direction === 'left' || direction === 'right')) {
+        event.preventDefault(); if (tiles()[currentFocus]) tiles()[currentFocus].focus(); return;
+      }
+      if (active && active.id === 'settingsButton' && (direction === 'left' || direction === 'right')) {
+        event.preventDefault(); if (tiles()[currentFocus]) tiles()[currentFocus].focus(); return;
+      }
+      if (!active || !active.classList || !active.classList.contains('app-tile')) {
+        event.preventDefault(); if (tiles()[currentFocus]) tiles()[currentFocus].focus(); return;
+      }
+    }
+    if (isConfirm) {
+      const active = document.activeElement;
+      if (active && (active.id === 'weatherDisplay' || active.id === 'settingsButton')) { event.preventDefault(); active.click(); return; }
+      if (active && active.classList && active.classList.contains('app-tile')) { event.preventDefault(); launchApp(Number(active.dataset.index)); return; }
+      event.preventDefault(); launchApp(currentFocus);
+    }
   }
   function init() {
     renderApps(); applyVisualSettings(); bindSettings();
@@ -523,7 +876,16 @@
     $('appRow').addEventListener('mousemove', updatePointerFocus, { passive: true });
     ['pointerdown','mousemove','touchstart','keydown'].forEach(name => window.addEventListener(name, () => { if (!$('screensaver').classList.contains('hidden')) closeScreensaver(); else resetIdleTimer(); }, { passive: true }));
     updateClock(); setInterval(updateClock, 1000); scheduleWeather(); resetIdleTimer();
-    if (settings.wallpaperUrl) applyWallpaperUrl(settings.wallpaperUrl); else showStoredWallpaper();
+    (async function restoreWallpaperOnStartup() {
+      let restored = false;
+      if (settings.wallpaperUrl) restored = await applyWallpaperUrl(settings.wallpaperUrl);
+      else restored = await showStoredWallpaper();
+      if (!restored) {
+        settings.wallpaperUrl = DEFAULT_WALLPAPER;
+        const fallbackApplied = await applyWallpaperUrl(DEFAULT_WALLPAPER);
+        if (fallbackApplied) saveSettings();
+      }
+    })();
     if (tiles()[0]) tiles()[0].focus();
   }
   document.addEventListener('DOMContentLoaded', init);

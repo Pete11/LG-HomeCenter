@@ -1,4 +1,3 @@
-
 name: Build and publish Homebrew IPK
 
 on:
@@ -14,140 +13,83 @@ jobs:
   build-release:
     name: Build and release LG Home Center
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Download repository source
       - name: Check out source
         uses: actions/checkout@v7
 
-      # 2. Configure Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
           node-version: '22'
           package-manager-cache: false
 
-      # 3. Install LG webOS CLI
       - name: Install webOS TV CLI
         run: npm install --global @webos-tools/cli@3.2.6
 
-      # 4. Download official LG webOSTV.js library
       - name: Download official webOSTV.js library
         shell: bash
         run: |
           set -euo pipefail
-
           ZIP_PATH="$RUNNER_TEMP/webOSTVjs-1.2.13.zip"
           EXTRACT_DIR="$RUNNER_TEMP/webOSTVjs-1.2.13"
-
           curl --fail --location --retry 3 --retry-delay 2 \
             "https://webostv.developer.lge.com/assets/library/webOSTVjs-1.2.13.zip" \
             --output "$ZIP_PATH"
-
-          mkdir -p "$EXTRACT_DIR"
-          mkdir -p app/webOSTVjs-1.2.13
-
+          mkdir -p "$EXTRACT_DIR" app/webOSTVjs-1.2.13
           unzip -q "$ZIP_PATH" -d "$EXTRACT_DIR"
-
-          LIBRARY_PATH="$(find "$EXTRACT_DIR" \
-            -type f -iname 'webOSTV.js' -print -quit)"
-
+          LIBRARY_PATH="$(find "$EXTRACT_DIR" -type f -iname 'webOSTV.js' -print -quit)"
           if [[ -z "$LIBRARY_PATH" ]]; then
-            echo "ERROR: webOSTV.js was not found in LG archive."
+            echo "ERROR: webOSTV.js not found in official LG archive."
             find "$EXTRACT_DIR" -maxdepth 5 -type f
             exit 1
           fi
-
           cp "$LIBRARY_PATH" app/webOSTVjs-1.2.13/webOSTV.js
-
           test -s app/webOSTVjs-1.2.13/webOSTV.js
-
           echo "Official LG webOSTV.js installed successfully."
 
-      # 5. Set application version
       - name: Set application version
         id: meta
         shell: bash
         run: |
           set -euo pipefail
-
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
             VERSION="${GITHUB_REF_NAME#v}"
           else
             VERSION="$(node -p "require('./app/appinfo.json').version")"
           fi
-
           node - "$VERSION" <<'NODE'
           const fs = require('fs');
-
           const file = 'app/appinfo.json';
           const info = JSON.parse(fs.readFileSync(file, 'utf8'));
-
           info.version = process.argv[2];
-
-          fs.writeFileSync(
-            file,
-            JSON.stringify(info, null, 2) + '\n'
-          );
+          fs.writeFileSync(file, JSON.stringify(info, null, 2) + '\n');
           NODE
-
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
-
           echo "Application version: $VERSION"
 
-      # 6. Validate source and build IPK
       - name: Validate source and package IPK
         shell: bash
         run: |
           set -euo pipefail
-
-          echo "Checking JavaScript syntax..."
-
           node --check app/app.js
-
-          echo "Checking appinfo.json..."
-
-          node -e "
-            JSON.parse(
-              require('fs').readFileSync(
-                'app/appinfo.json',
-                'utf8'
-              )
-            )
-          "
-
-          echo "Checking official webOSTV.js..."
-
+          node -e "JSON.parse(require('fs').readFileSync('app/appinfo.json', 'utf8'))"
           test -s app/webOSTVjs-1.2.13/webOSTV.js
-
-          grep -q \
-            'webOSTVjs-1.2.13/webOSTV.js' \
-            app/index.html
-
-          echo "All source checks passed."
-
+          grep -q 'webOSTVjs-1.2.13/webOSTV.js' app/index.html
+          test -s app/assets/wallpapers/alpine-lake-4k.jpg
+          test -s app/assets/wallpapers/neo-noir-city.svg
+          test -s app/assets/wallpapers/poster-wall.svg
+          grep -q 'id="wallpaperImage"' app/index.html
           mkdir -p dist
-
-          echo "Building IPK package..."
-
           ares-package app -o dist
-
-          IPK_PATH="$(find dist \
-            -maxdepth 1 \
-            -type f \
-            -name '*.ipk' \
-            -print -quit)"
-
+          IPK_PATH="$(find dist -maxdepth 1 -type f -name '*.ipk' -print -quit)"
           if [[ -z "$IPK_PATH" ]]; then
             echo "ERROR: IPK package was not created."
             exit 1
           fi
-
-          echo "Package successfully created:"
+          echo "IPK package created:"
           ls -lh "$IPK_PATH"
 
-      # 7. Generate Homebrew manifest
       - name: Generate Homebrew manifest
         env:
           VERSION: ${{ steps.meta.outputs.version }}
@@ -156,39 +98,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
-          IPK_PATH="$(find dist \
-            -maxdepth 1 \
-            -type f \
-            -name '*.ipk' \
-            -print -quit)"
-
+          IPK_PATH="$(find dist -maxdepth 1 -type f -name '*.ipk' -print -quit)"
           IPK_NAME="$(basename "$IPK_PATH")"
-
           SHA256="$(sha256sum "$IPK_PATH" | awk '{print $1}')"
-
           IPK_SIZE="$(stat -c '%s' "$IPK_PATH")"
-
           ICON_URL="https://raw.githubusercontent.com/${REPOSITORY}/main/app/icon.png"
-
           SOURCE_URL="https://github.com/${REPOSITORY}"
-
           IPK_URL="https://github.com/${REPOSITORY}/releases/download/${TAG}/${IPK_NAME}"
-
-          export VERSION
-          export TAG
-          export REPOSITORY
-          export IPK_NAME
-          export SHA256
-          export IPK_SIZE
-          export ICON_URL
-          export SOURCE_URL
-          export IPK_URL
-
+          export VERSION TAG REPOSITORY IPK_NAME SHA256 IPK_SIZE ICON_URL SOURCE_URL IPK_URL
           python3 - <<'PY'
-          import json
-          import os
-
+          import json, os
           manifest = {
               "id": "com.homecenter.launcher",
               "version": os.environ["VERSION"],
@@ -199,22 +118,15 @@ jobs:
               "sourceUrl": os.environ["SOURCE_URL"],
               "rootRequired": False,
               "ipkUrl": os.environ["IPK_URL"],
-              "ipkHash": {
-                  "sha256": os.environ["SHA256"]
-              },
+              "ipkHash": {"sha256": os.environ["SHA256"]},
               "ipkSize": int(os.environ["IPK_SIZE"])
           }
-
-          output_path = "dist/com.homecenter.launcher.manifest.json"
-
-          with open(output_path, "w", encoding="utf-8") as output:
-              json.dump(manifest, output, indent=2)
-              output.write("\n")
-
+          with open("dist/com.homecenter.launcher.manifest.json", "w", encoding="utf-8") as f:
+              json.dump(manifest, f, indent=2)
+              f.write("\n")
           print("Homebrew manifest generated successfully.")
           PY
 
-      # 8. Publish GitHub Release
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:

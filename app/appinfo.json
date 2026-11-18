@@ -1,6 +1,6 @@
 {
   "id": "com.homecenter.launcher",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "vendor": "HomeCenter Project",
   "type": "web",
   "main": "index.html",

@@ -1,70 +1,71 @@
-# LG Home Center — Homebrew repository starter
+# LG Home Center — Full webOS project (v0.7.0)
 
-This repository is the GitHub/Homebrew packaging wrapper for **LG Home Center**. The source copied into `app/` is prototype **v0.5.0** for LG webOS TV 25.
+A customizable, cinematic Home launcher for rooted LG webOS TVs. This is a complete repository package, not a partial patch.
 
-## Current scope
+## Included
 
-The app currently includes the cinematic home interface, six configurable shortcuts, clock/date, Open-Meteo weather and 10-day forecast, dock glass settings, OLED-oriented UI brightness controls, app-level screensaver, and local settings/export-import.
+- Full webOS app source (`app/`), application metadata, icons and official webOSTV.js loader path.
+- Six-slot shortcut dock, installed-app picker, app icons read from webOS launch points, keyboard/Magic Remote directional navigation, and app launch via webOS Application Manager/Homebrew bridge.
+- Clock, date, weather and 10-day forecast.
+- Smoked-black / frosted-white glass controls, left gradient, glass transparency, blur and OLED UI intensity controls.
+- Screensaver overlay, local settings, import/export and Custom CSS.
+- 4K wallpaper layer fix: the wallpaper is now a real `<img>` layer above the base gradient and below the shade/UI. This fixes the previous negative-z-index pseudo-element issue.
+- Bundled offline wallpapers: `assets/wallpapers/alpine-lake-4k.jpg` (3840×2160 enhanced image) and `assets/wallpapers/neo-noir-city.svg` (scalable vector) and `assets/wallpapers/poster-wall.svg` (original fictional poster-wall collage). Additional online nature/cinematic images are offered as optional presets; failed remote sources are reported without replacing the current wallpaper.
+- Complete GitHub Actions release workflow, Homebrew repository catalog and local IPK build script.
 
-The following are **not implemented as system-level TV features yet**: replacing LG HOME, a system-wide screensaver, and actual TV power-off/standby scheduling. The current standby settings are preferences only. Do not enable or rely on them as real power controls.
+## Requirements
 
-## Create the GitHub repository
+- Rooted LG webOS TV with Homebrew Channel for installed-app discovery and the Homebrew root bridge.
+- Internet connection for weather, online wallpaper presets, and Homebrew/GitHub updates. Bundled wallpapers work offline.
+- Git for Windows is recommended for replacing the repository because GitHub's browser uploader often omits hidden `.github` folders.
 
-1. Create a **public** GitHub repository named `LG-HomeCenter` (or choose another name).
-2. Upload the contents of this folder to the repository root. Keep `.github/workflows/release.yml` in place.
-3. In `repo.json`, replace both instances of `YOUR_GITHUB_USERNAME` with your GitHub username. If you chose a different repository name, also replace `LG-HomeCenter` in those two URLs.
-4. Commit the change to the default branch (normally `main`).
+## Replace the GitHub repository contents
 
-The repository must be public because Homebrew Channel has to download `repo.json`, the release manifest, and the IPK over public HTTPS without GitHub authentication.
+1. Extract this ZIP to a normal folder.
+2. Install Git for Windows if `git --version` is not available.
+3. Open PowerShell in the extracted folder.
+4. Run:
 
-## Build and publish the first IPK
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\PUBLISH_TO_GITHUB.ps1
+   ```
 
-The GitHub Actions workflow builds the app with `@webos-tools/cli` and publishes two release assets: the `.ipk` package and `com.homecenter.launcher.manifest.json`. The manifest contains the exact IPK download URL, version, byte size and SHA-256 hash.
+5. Sign in to GitHub if Git Credential Manager asks. The script clones `Pete11/LG-HomeCenter`, replaces the repository files, copies hidden `.github/workflows/release.yml`, commits and pushes to `main`.
+6. Open GitHub → Actions → **Build and publish Homebrew IPK** → **Run workflow**.
+7. The workflow builds the IPK and publishes a GitHub Release using the version in `app/appinfo.json` (`0.7.0`).
 
-After the files are committed, create and push a version tag from a local clone:
+The script does not rewrite repository history and does not force-push. Existing commits and prior releases remain available.
 
-```powershell
-git tag v0.5.0
-git push origin v0.5.0
-```
+## Manual upload alternative
 
-Alternatively, use **Actions → Build and publish Homebrew IPK → Run workflow**. For a later release, update `app/appinfo.json` if desired, then push a new tag such as `v0.5.1` or `v0.6.0`.
+Upload the visible root files/folders through GitHub's web UI, then create `.github/workflows/release.yml` manually using the exact contents from this archive. Do not forget the hidden `.github` folder: without it GitHub Actions will not see the workflow.
 
-Check the GitHub Actions run. Do not add the repository to the TV until a successful release exists and both release assets are visible.
+## Local IPK build
 
-## Add to Homebrew Channel
-
-Once the first release has succeeded, open Homebrew Channel on the rooted TV:
-
-1. Open **Settings → Add Repository**.
-2. Enter this URL (replace the username/repository if needed):
-
-   `https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/LG-HomeCenter/main/repo.json`
-
-3. Return to the app browser and refresh/reopen the repository list.
-4. Select **LG Home Center** and inspect the details before installing.
-
-This only installs the app as an ordinary webOS application. It does **not** replace the LG HOME launcher or install system-level power/screensaver hooks.
-
-## Local build on Windows
-
-Requirements: Node.js 20 or later and `@webos-tools/cli`.
+Install the LG webOS CLI, then run:
 
 ```powershell
 npm install -g @webos-tools/cli@3.2.6
 .\build-ipk.ps1
 ```
 
-The resulting `.ipk` is written to `dist/`. The GitHub Actions workflow is the recommended method for publishing a release manifest with the correct SHA-256 hash.
+The script downloads the official LG webOSTV.js 1.2.13 archive if it is not already present, validates the app and packages the IPK into `dist/`.
 
-## Safety and recovery
+## Wallpaper behavior
 
-- Keep the LG HOME app/system configuration unchanged during the first install.
-- Test the Home Center app as a normal app first.
-- Do not add startup hooks, alter HOME mappings, or install root scripts as part of this first release.
-- Keep the original v0.5 prototype ZIP as a local backup.
+- Bundled wallpapers are app-relative local assets and do not need external hosts or CORS.
+- Selecting an online image preloads it before committing the setting. If the image fails, the previous wallpaper remains active and the UI shows an error.
+- Custom image uploads are stored in IndexedDB on the TV. Clearing the selected image restores the bundled Alpine Lake wallpaper.
+- The gallery uses external links for additional movie/cinematic art. Resolution and availability depend on the original host. These online images are not redistributed in this repository.
 
-## Technical references
+## Important limitations
 
-- [webOS TV CLI Developer Guide](https://webostv.developer.lge.com/develop/tools/cli-dev-guide)
-- [webOS Homebrew Channel repository and manifest format](https://github.com/webosbrew/webos-homebrew-channel)
+- This package does **not** intercept or remap the physical HOME button. Home Chooser / root-level system integration must be validated separately on the exact webOS 25 firmware before changing the TV's default HOME behavior.
+- The custom screensaver currently runs as an overlay while Home Center is active; it is not yet registered as the native system screensaver.
+- Power/standby controls remain preferences only until the correct root power service is tested on this firmware.
+- App discovery and reading original app icons require the Homebrew root service. Direct app launch also attempts the webOS Application Manager API.
+- This source archive has been syntax-checked; it has not been validated on the physical TV. Keep the LG stock HOME path available during testing.
+
+## Repository
+
+`https://github.com/Pete11/LG-HomeCenter`

@@ -1,0 +1,4 @@
+dist/
+node_modules/
+*.log
+app/webOSTVjs-1.2.13/webOSTV.js
