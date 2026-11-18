@@ -1,56 +1,54 @@
-# LG Home Center — Complete webOS Project (v0.9.1)
+# LG Home Center — full webOS project (v1.0.0)
 
-A customizable launcher for rooted LG webOS TVs. This archive contains the complete source, local wallpaper assets, GitHub Actions workflow, and Windows Git publishing script.
+Custom launcher for rooted LG webOS TVs. This package includes the source, the complete user-supplied offline movie wallpaper collection, thumbnails, GitHub Actions workflow, and Windows publishing/build scripts.
 
-## v0.9.1 — My Wallpaper Library
+## v1.0.0 — 37-image offline movie library
 
-- One dedicated local wallpaper library in **Settings → General**.
-- Import multiple image files in one selection using the TV file picker.
-- Accepts JPG/JPEG, PNG, WebP, GIF, BMP and AVIF when the TV browser can decode the format.
-- Each image is validated and stored as a Blob in IndexedDB on the TV.
-- Personal gallery with previews, select/apply, current-wallpaper indicator, and per-image Remove.
-- Refresh Library and Clear All Images controls.
-- Slideshow interval: 1, 5, 10, 15, 30 or 60 minutes.
-- Slideshow source: My library only, My library + bundled wallpapers, or bundled wallpapers only.
-- When the personal-only library first reaches two images, the slideshow is enabled automatically. You can turn it off at any time.
-- Requests persistent browser storage where supported by webOS.
-- Direct image URL remains available as an optional one-off wallpaper source.
+- Includes all **37 JPG images** supplied in `LG_WALL.zip`.
+- Preserves original image dimensions and quality; the gallery uses separate 480×270 thumbnails for fast browsing.
+- The Movies gallery works fully offline.
+- Choose individual wallpapers from Settings → General → Wallpaper Library.
+- Slideshow sources: Movies, Nature, original cinematic artwork, all included wallpapers, imported-on-TV images, or everything.
+- Interval options: 1, 5, 10, 15, 30, or 60 minutes.
+- To add more images later, copy JPG/JPEG images to `app/assets/wallpapers/movies`, regenerate thumbnails (the helper script is included), then run `PUBLISH_TO_GITHUB.ps1`. The script regenerates thumbnails and the movie catalog automatically before publishing; bump `app/appinfo.json` to a new patch version (for example 1.0.1) before publishing an update.
+- No Digi Storage, cloud feed, or file picker is required for the included collection.
 
-## Local library notes
+## Image collection
 
-- Files remain in the app's IndexedDB storage on the TV across normal app launches and app updates, as long as the webOS app data is retained.
-- Uninstalling the app, clearing its data, or a firmware storage reset may remove the local images. Settings JSON export does not include the binary image files.
-- USB file selection depends on whether the TV's webOS file picker exposes USB files to this app. If it does not, use another supported local-file source or a browser on the TV that exposes files to web apps.
-- Slideshow runs while Home Center is active. It is not a background system service.
-- No Digi Storage, cloud login, or external feed is required for the local library.
+The 37 user-provided film wallpapers are packaged under `app/assets/wallpapers/movies`. Their thumbnails are under `app/assets/wallpapers/movies/thumbs`. Resolution metadata in the gallery reflects each source image's actual dimensions; not every image is 4K.
 
 ## Publish the complete project to GitHub
 
-1. Extract this archive.
-2. Open PowerShell in the extracted `LG-HomeCenter-v0.9.1-Full` folder.
+1. Extract the archive.
+2. Open PowerShell in the `LG-HomeCenter-v1.0.0-Full` folder.
 3. Run:
 
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\PUBLISH_TO_GITHUB.ps1
    ```
 
-4. The script syncs `Pete11/LG-HomeCenter`, replaces the working tree while preserving `.git`, commits, and pushes the full project.
+4. The script first runs `GENERATE_MOVIE_LIBRARY.ps1` to rebuild thumbnails and the local JS catalog from the images in the folder. It then syncs `Pete11/LG-HomeCenter`, preserves the `.git` history, replaces the project files, commits and pushes.
 5. Open GitHub → Actions → **Build and publish Homebrew IPK** → **Run workflow**.
-6. Confirm Release `v0.9.1` contains the IPK and Homebrew manifest.
+6. Verify Release `v1.0.0` includes the IPK and Homebrew manifest.
 
-The script uses `Desktop\LG-HomeCenter-git` as its local working copy by default. It reuses that clone, fast-forwards it from `origin/main`, then replaces the tracked project files. It does not force-push or delete Git history.
+The script uses `Desktop\LG-HomeCenter-git` by default. If that clone already exists, it fetches and fast-forwards `main` before replacing the project. It does not force-push or rewrite Git history.
 
 ## Build locally
 
-Requirements: Windows, Git for Windows, Node.js, npm, and LG webOS TV CLI 3.2.6.
+Requirements: Windows, Git for Windows, Node.js, npm and LG webOS TV CLI 3.2.6.
 
 ```powershell
 npm install -g @webos-tools/cli@3.2.6
 powershell -ExecutionPolicy Bypass -File .\build-ipk.ps1
 ```
 
-## Important limitations
+## Notes
 
-- The TV file picker/USB exposure is firmware-dependent and must be tested on the actual TV.
-- App category `home` and Home Chooser permission do not by themselves guarantee that the physical HOME key will be redirected. HOME interception remains a separate Home Chooser/Hearth/root integration task.
-- Standby and native system screensaver controls remain separate root-level integrations.
+- Bundled wallpapers are part of the IPK and available offline.
+- Additional images added to the repository require a new IPK build and Homebrew update.
+- The app's slideshow operates while Home Center is active. It is not a background system service.
+- The Home key routing and native system standby/screensaver remain separate root/Home Chooser integrations and are not changed by this wallpaper release.
+
+## Windows PowerShell 5.1 compatibility
+
+The movie catalog and thumbnail scripts use .NET `System.Drawing` and Windows PowerShell only; Python and Pillow are not required. The JSON catalog is serialized from a plain `System.Object[]` to avoid the Windows PowerShell 5.1 `Argument types do not match` failure. Run `PUBLISH_TO_GITHUB.ps1` directly; it generates thumbnails and the catalog before publishing.

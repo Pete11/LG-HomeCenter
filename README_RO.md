@@ -1,44 +1,38 @@
-# LG Home Center — proiect complet webOS (v0.9.1)
+# LG Home Center — proiect complet webOS (v1.0.0)
 
-Launcher personalizabil pentru televizoare LG webOS rootate. Arhiva conține sursa completă, imaginile locale, workflow-ul GitHub Actions și scriptul Windows de publicare Git.
+Launcher personalizabil pentru televizoare LG webOS rootate. Arhiva include sursa completă, colecția de wallpaper-uri primită de la tine, miniaturi, workflow-ul GitHub Actions și scripturile Windows pentru publicare și construire IPK.
 
-## v0.9.1 — Biblioteca locală de wallpaper-uri
+## v1.0.0 — Bibliotecă offline cu 37 de imagini din filme
 
-- O bibliotecă unică în **Settings → General → My Wallpaper Library**.
-- Poți selecta și importa mai multe imagini simultan din selectorul de fișiere al televizorului.
-- Formate acceptate: JPG/JPEG, PNG, WebP, GIF, BMP și AVIF, dacă browserul televizorului le poate decoda.
-- Fiecare imagine este verificată și salvată ca Blob în IndexedDB pe televizor.
-- Galerie cu miniaturi, aplicarea imaginii selectate, marcaj pentru wallpaper-ul curent și ștergere individuală.
-- Butoane Refresh Library și Clear All Images.
-- Interval slideshow: 1, 5, 10, 15, 30 sau 60 de minute.
-- Sursa slideshow: doar biblioteca personală, biblioteca personală + imaginile incluse sau doar imaginile incluse.
-- Când biblioteca personală ajunge pentru prima dată la două imagini, slideshow-ul se activează automat dacă este selectată sursa Personal. Poate fi oprit oricând.
-- Aplicația solicită stocare persistentă atunci când firmware-ul oferă această funcție.
-- Rămâne disponibil și câmpul opțional pentru un URL direct către o singură imagine.
+- Include toate cele **37 de imagini JPG** din arhiva `LG_WALL.zip`.
+- Imaginile originale sunt păstrate la rezoluția și calitatea sursei.
+- Miniaturile separate de 480×270 fac navigarea prin galerie mai rapidă.
+- Galeria Movies funcționează fără internet.
+- Alege orice wallpaper din Settings → General → Wallpaper Library.
+- Slideshow: Movies, Nature, artwork cinematic original, toate imaginile incluse, imagini importate anterior pe TV sau toate sursele.
+- Interval: 1, 5, 10, 15, 30 sau 60 de minute.
+- Pentru imagini noi, copiază fișiere JPG/JPEG în `app/assets/wallpapers/movies`, rulează `PUBLISH_TO_GITHUB.ps1`. Scriptul regenerează automat miniaturile și catalogul înainte de publicare; mărește `app/appinfo.json` la următoarea versiune patch (de exemplu 1.0.1) înainte de actualizare.
+- Nu este necesar Digi Storage, un feed cloud sau selectorul de fișiere al televizorului pentru colecția inclusă.
 
-## Despre biblioteca locală
+## Unde sunt imaginile
 
-- Imaginile rămân în IndexedDB pe televizor între pornirile și actualizările normale ale aplicației, cât timp datele aplicației sunt păstrate de webOS.
-- Dezinstalarea aplicației, ștergerea datelor sau resetarea stocării firmware-ului poate elimina imaginile. Exportul JSON al setărilor nu include fișierele imagine.
-- Accesul la fișiere de pe USB depinde de selectorul de fișiere al firmware-ului webOS. Dacă acesta nu expune stick-ul USB aplicației, trebuie folosită o altă sursă locală compatibilă.
-- Slideshow-ul rulează cât timp Home Center este activ; nu este un serviciu de fundal al sistemului.
-- Nu este necesar Digi Storage, un cont cloud sau un feed extern.
+Cele 37 de wallpaper-uri furnizate sunt în `app/assets/wallpapers/movies`. Miniaturile sunt în `app/assets/wallpapers/movies/thumbs`. Galeria afișează rezoluția reală a fiecărei imagini; nu toate fișierele sunt 4K.
 
 ## Publicare completă pe GitHub
 
 1. Extrage arhiva.
-2. Deschide PowerShell în folderul `LG-HomeCenter-v0.9.1-Full`.
+2. Deschide PowerShell în folderul `LG-HomeCenter-v1.0.0-Full`.
 3. Execută:
 
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\PUBLISH_TO_GITHUB.ps1
    ```
 
-4. Scriptul sincronizează repository-ul `Pete11/LG-HomeCenter`, înlocuiește fișierele proiectului păstrând `.git`, face commit și push.
+4. Scriptul rulează mai întâi `GENERATE_MOVIE_LIBRARY.ps1`, care reconstruiește miniaturile și catalogul JavaScript din toate imaginile din folder. Apoi sincronizează repository-ul `Pete11/LG-HomeCenter`, păstrează istoricul `.git`, înlocuiește fișierele proiectului, face commit și push.
 5. Intră în GitHub → Actions → **Build and publish Homebrew IPK** → **Run workflow**.
-6. Verifică Release `v0.9.1`, care trebuie să conțină IPK-ul și manifestul Homebrew.
+6. Verifică Release `v1.0.0`, care trebuie să conțină IPK-ul și manifestul Homebrew.
 
-Scriptul folosește implicit `Desktop\LG-HomeCenter-git` ca folder local. Dacă acel clone există, îl reutilizează, îl actualizează prin fast-forward de la `origin/main`, apoi înlocuiește fișierele proiectului. Nu folosește force-push și nu șterge istoricul Git.
+Scriptul folosește implicit `Desktop\LG-HomeCenter-git`. Dacă acel clone există, descarcă modificările noi și face fast-forward înainte de înlocuirea proiectului. Nu folosește force-push și nu rescrie istoricul Git.
 
 ## Construire locală
 
@@ -49,8 +43,13 @@ npm install -g @webos-tools/cli@3.2.6
 powershell -ExecutionPolicy Bypass -File .\build-ipk.ps1
 ```
 
-## Limitări importante
+## Note importante
 
-- Accesul selectorului TV la fișierele USB depinde de firmware și trebuie testat pe televizorul real.
-- `appCategory: home` și permisiunea Home Chooser nu garantează singure redirecționarea butonului fizic HOME. Interceptarea HOME rămâne o integrare separată Home Chooser/Hearth/root.
-- Standby-ul și screensaverul nativ al sistemului rămân integrări root separate.
+- Imaginile incluse sunt împachetate în IPK și disponibile offline.
+- Imaginile adăugate ulterior în repository necesită construirea unui IPK nou și actualizarea aplicației prin Homebrew.
+- Slideshow-ul rulează cât timp Home Center este activ; nu este un serviciu de fundal al sistemului.
+- Redirecționarea butonului HOME și funcțiile native de standby/screensaver sunt integrări separate Home Chooser/root și nu sunt modificate de această versiune.
+
+## Compatibilitate Windows PowerShell 5.1
+
+Scripturile de generare a catalogului și miniaturilor folosesc numai .NET `System.Drawing` și Windows PowerShell; nu este necesar Python sau Pillow. Catalogul JSON este serializat dintr-un `System.Object[]` simplu pentru a evita eroarea PowerShell 5.1 `Argument types do not match`. Rulează direct `PUBLISH_TO_GITHUB.ps1`; acesta generează miniaturile și catalogul înainte de publicare.

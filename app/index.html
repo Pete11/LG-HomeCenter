@@ -81,40 +81,40 @@
         <div class="settings-content" id="settingsContent" tabindex="0" aria-label="Settings options">
           <section class="settings-page active" data-page="general">
             <div class="setting-card">
-              <h2>4K Wallpaper Library</h2>
-              <p>Choose a bundled wallpaper that works offline, or load an online cinematic image. The bundled Alpine Lake image is included in this app package.</p>
+              <h2>Wallpaper Library</h2>
+              <p>Your movie wallpapers are included in this app and work offline. Choose a category, preview a picture, and apply it as your home-screen background.</p>
               <label class="field-label" for="wallpaperCategory">Gallery</label>
-              <select id="wallpaperCategory"><option value="nature">Nature · 4K</option><option value="cinema">Movies & Cinematic · 4K+</option></select>
+              <select id="wallpaperCategory"><option value="movies" selected>Movies · 37 wallpapers</option><option value="nature">Nature · 4K</option><option value="cinema">Original cinematic artwork</option></select>
               <div id="wallpaperGallery" class="wallpaper-gallery" aria-label="Wallpaper library"></div>
               <div id="wallpaperGalleryStatus" class="muted wallpaper-gallery-status">Select a wallpaper to apply it.</div>
             </div>
-            <div class="setting-card personal-library-panel">
+            <div class="setting-card movie-library-info">
               <div class="library-title-row">
-                <div><h2>My Wallpaper Library</h2><p>Build a private wallpaper collection on this TV. Add movie posters, film stills, and 4K images from the file picker. You can select several images at once.</p></div>
-                <span id="personalWallpaperCount" class="library-count">0 images</span>
+                <div><h2>My Movie Collection</h2><p>Your supplied movie wallpapers are packaged locally in the Movies gallery. They do not require USB access, cloud access, or an internet connection.</p></div>
+                <span class="library-count" id="movieWallpaperCount">37 images</span>
               </div>
+              <p class="setting-note">To add more wallpapers later, place JPG, JPEG or PNG files in <strong>app/assets/wallpapers/movies</strong> on your PC, then run the included GitHub publishing script and build a new IPK. The new images will appear in the Movies gallery after updating the app.</p>
               <label class="field-label" for="wallpaperUrl">Apply one direct image URL (optional)</label>
               <div class="inline-field"><input id="wallpaperUrl" type="url" placeholder="https://.../wallpaper.jpg"><button id="applyWallpaperUrl" class="small-action" type="button">Apply URL</button></div>
-              <div class="library-upload-row">
-                <label class="small-action file-button wallpaper-upload-button" for="wallpaperFile" tabindex="0" role="button">＋ Add images</label>
-                <input id="wallpaperFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif" multiple class="wallpaper-file-hidden">
-                <button id="refreshPersonalWallpapers" class="small-action" type="button">Refresh library</button>
-                <button id="clearPersonalWallpapers" class="text-action danger-text" type="button">Clear all images</button>
-              </div>
-              <p class="setting-note">Images are stored locally in this app on the TV using IndexedDB. Up to 30 MB per image. JPG, PNG, WebP, GIF, BMP and AVIF are accepted when supported by the TV. Keep the app installed to retain the library; uninstalling the app or clearing its data can remove it.</p>
-              <div id="personalWallpaperGallery" class="wallpaper-gallery personal-wallpaper-gallery" aria-label="My wallpaper library"></div>
-              <div id="personalWallpaperStatus" class="muted wallpaper-gallery-status" aria-live="polite">Your personal wallpaper library is empty. Select Add images to import posters or photos.</div>
               <button id="clearWallpaper" class="text-action" type="button">Restore default wallpaper</button>
+            </div>
+            <div id="legacyPersonalWallpaperTools" hidden aria-hidden="true">
+              <span id="personalWallpaperCount">0 images</span>
+              <input id="wallpaperFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif" multiple>
+              <button id="refreshPersonalWallpapers" type="button">Refresh legacy library</button>
+              <button id="clearPersonalWallpapers" type="button">Clear legacy library</button>
+              <div id="personalWallpaperGallery"></div>
+              <div id="personalWallpaperStatus">Legacy personal image storage</div>
             </div>
             <div class="setting-card">
               <h2>Wallpaper Slideshow</h2>
-              <p>Rotate automatically through your local library. The wallpaper changes only while Home Center is active.</p>
+              <p>Rotate automatically through your selected offline collection. The wallpaper changes only while Home Center is active.</p>
               <label class="toggle-row"><span>Enable wallpaper slideshow</span><input id="wallpaperSlideshowEnabled" type="checkbox"></label>
               <label class="field-label" for="wallpaperSlideshowInterval">Change wallpaper every</label>
               <select id="wallpaperSlideshowInterval"><option value="1">1 minute · test</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select>
               <label class="field-label" for="wallpaperSlideshowSource">Slideshow source</label>
-              <select id="wallpaperSlideshowSource"><option value="personal">My library only</option><option value="all">My library + included wallpapers</option><option value="bundled">Included wallpapers only</option></select>
-              <div id="wallpaperSlideshowStatus" class="muted wallpaper-gallery-status" aria-live="polite">Slideshow is off. Add at least two images to your library to rotate personal wallpapers.</div>
+              <select id="wallpaperSlideshowSource"><option value="movies" selected>Movies collection · 37 wallpapers</option><option value="nature">Nature collection</option><option value="cinema">Original cinematic artwork</option><option value="bundled">All included wallpapers · 41 images</option><option value="personal">Imported on this TV</option><option value="all">All included + imported wallpapers</option></select>
+              <div id="wallpaperSlideshowStatus" class="muted wallpaper-gallery-status" aria-live="polite">Slideshow is off. Choose Movies collection and enable the slideshow to rotate your movie collection.</div>
             </div>
             <div class="setting-card two-col">
               <div><h2>Weather</h2><p>Location used for current weather conditions.</p><label class="field-label" for="weatherCityInput">City</label><input id="weatherCityInput" type="text" placeholder="Bucharest"></div>
@@ -171,7 +171,7 @@
               </div>
               <ol class="home-chooser-steps">
                 <li>Install <strong>Home Chooser</strong> from Homebrew Channel and open it once to complete its setup.</li>
-                <li>Then install or update LG Home Center 0.8.0. This version requests the Home Chooser launcher permission.</li>
+                <li>Then install or update LG Home Center 1.0.0. This version requests the Home Chooser launcher permission.</li>
                 <li>Open Home Chooser, select <strong>LG Home Center</strong>, press OK and confirm.</li>
                 <li>Press the physical HOME button to test. To restore the original interface, open Home Chooser and select <strong>LG Home (stock)</strong>.</li>
               </ol>
@@ -182,7 +182,7 @@
           <section class="settings-page" data-page="advanced">
             <div class="setting-card"><h2>Custom CSS</h2><p>Additional CSS rules. Avoid aggressive selectors that could hide controls or settings.</p><textarea id="customCss" spellcheck="false" placeholder=".clock-time { letter-spacing: .05em; }"></textarea><button id="applyCustomCss" class="small-action">Apply CSS</button></div>
             <div class="setting-card"><h2>Configuration</h2><p>Export your settings to a JSON file or import a previously saved backup.</p><div class="button-row"><button id="exportSettings" class="small-action">Export settings</button><label class="small-action file-button" for="importSettingsFile">Import settings</label><input id="importSettingsFile" type="file" accept="application/json" hidden></div></div>
-            <div class="setting-card"><h2>System information</h2><p>Home Center 0.9.0 · webOS TV app · Up to 6 shortcuts · Local settings</p><p class="muted">The HOME button is assigned through Home Chooser. TV power controls still require separate root-level integration.</p></div>
+            <div class="setting-card"><h2>System information</h2><p>Home Center 1.0.0 · webOS TV app · Up to 6 shortcuts · Local settings</p><p class="muted">The HOME button is assigned through Home Chooser. TV power controls still require separate root-level integration.</p></div>
           </section>
         </div>
         <div class="settings-actions"><span id="saveState">Settings are saved automatically on this device.</span><button id="doneSettings" class="primary-action">Done</button></div>
@@ -192,6 +192,7 @@
 
   <div id="toast" class="toast" role="status"></div>
   <script src="webOSTVjs-1.2.13/webOSTV.js"></script>
+  <script src="assets/wallpapers/movie-library.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

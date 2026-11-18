@@ -85,14 +85,35 @@ jobs:
           test -s app/assets/wallpapers/otherworld-desert-4k.jpg
           test -s app/assets/wallpapers/neo-noir-city.svg
           test -s app/assets/wallpapers/poster-wall.svg
+          MOVIE_COUNT="$(find app/assets/wallpapers/movies -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.bmp' \) | wc -l)"
+          THUMB_COUNT="$(find app/assets/wallpapers/movies/thumbs -maxdepth 1 -type f -iname '*-thumb.jpg' | wc -l)"
+          test "$MOVIE_COUNT" -ge 37
+          test "$THUMB_COUNT" -eq "$MOVIE_COUNT"
+          test -s app/assets/wallpapers/movie-library.js
+          test -s app/assets/wallpapers/movies/movie-titles.json
+          node - <<'NODE'
+          const fs = require('fs');
+          const vm = require('vm');
+          const context = { window: {} };
+          vm.runInNewContext(fs.readFileSync('app/assets/wallpapers/movie-library.js', 'utf8'), context);
+          const entries = context.window.HOME_CENTER_MOVIE_PRESETS;
+          if (!Array.isArray(entries) || entries.length !== Number(process.env.EXPECTED_MOVIE_COUNT || entries.length) || entries.length < 37) {
+            throw new Error(`Movie catalog must include at least 37 entries; found ${entries && entries.length}`);
+          }
+          for (const item of entries) {
+            for (const field of ['url', 'preview']) {
+              if (!item[field] || !fs.existsSync(`app/${item[field]}`)) throw new Error(`Missing ${field} asset for ${item.title}`);
+            }
+          }
+          console.log(`Validated ${entries.length} movie wallpapers and their previews.`);
+          NODE
+          grep -q 'value="movies"' app/index.html
+          grep -q "wallpaperSlideshowSource: 'movies'" app/app.js
           grep -q 'id="wallpaperImage"' app/index.html
-          grep -q 'id="personalWallpaperGallery"' app/index.html
-          grep -q 'multiple class="wallpaper-file-hidden"' app/index.html
+          grep -q 'id="legacyPersonalWallpaperTools" hidden' app/index.html
           grep -q 'wallpaperSlideshowInterval' app/index.html
-          grep -q 'function clearPersonalWallpaperLibraryWithConfirm' app/app.js
+          grep -q 'async function collectSlideshowItems' app/app.js
           grep -q 'wallpaperSlideshowEnabled' app/index.html
-          grep -q 'id="refreshPersonalWallpapers"' app/index.html
-          grep -q 'id="clearPersonalWallpapers"' app/index.html
           ! grep -q 'cloudWallpaperFeedUrl' app/index.html
           mkdir -p dist
           ares-package app -o dist

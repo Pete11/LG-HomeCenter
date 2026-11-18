@@ -15,7 +15,16 @@ if (-not (Test-Path (Join-Path $ProjectSource 'app\appinfo.json'))) {
     throw 'The archive is incomplete: app\appinfo.json is missing.'
 }
 $Info = Get-Content (Join-Path $ProjectSource 'app\appinfo.json') -Raw | ConvertFrom-Json
-if ($Info.version -ne '0.9.1') { throw "Expected version 0.9.1, found $($Info.version)." }
+$Generator = Join-Path $ProjectSource 'GENERATE_MOVIE_LIBRARY.ps1'
+if (-not (Test-Path $Generator)) { throw 'Movie library generator is missing.' }
+& $Generator
+if (-not $?) { throw 'Movie library generation failed.' }
+if ([string]$Info.version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid app version '$($Info.version)'. Use semantic versioning such as 1.0.0." }
+$Version = [string]$Info.version
+$MovieFiles = @(Get-ChildItem (Join-Path $ProjectSource 'app\assets\wallpapers\movies') -File | Where-Object { $_.Extension -match '^\.(jpg|jpeg|png|bmp)$' })
+$MovieCount = $MovieFiles.Count
+$ThumbCount = (Get-ChildItem (Join-Path $ProjectSource 'app\assets\wallpapers\movies\thumbs') -Filter '*-thumb.jpg' -File | Measure-Object).Count
+if ($MovieCount -lt 37 -or $ThumbCount -ne $MovieCount) { throw "Expected at least 37 movie wallpapers and one thumbnail per image; found $MovieCount and $ThumbCount." }
 
 if (-not (Test-Path $Destination)) {
     Write-Host "Cloning $RepositoryUrl ..." -ForegroundColor Cyan
@@ -57,13 +66,13 @@ git -C $Destination add --all
 if ($LASTEXITCODE -ne 0) { throw 'git add failed.' }
 $Changes = git -C $Destination status --porcelain
 if ([string]::IsNullOrWhiteSpace(($Changes -join ''))) {
-    Write-Host 'The repository already matches this v0.9.1 archive. No commit is needed.' -ForegroundColor Yellow
+    Write-Host "The repository already matches this v$Version archive. No commit is needed." -ForegroundColor Yellow
     exit 0
 }
-git -C $Destination commit -m 'Publish LG Home Center v0.9.1 local wallpaper library'
+git -C $Destination commit -m "Publish LG Home Center v$Version movie wallpaper library"
 if ($LASTEXITCODE -ne 0) { throw 'git commit failed. Check Git user.name and user.email.' }
 git -C $Destination push origin main
 if ($LASTEXITCODE -ne 0) { throw 'git push failed. Complete GitHub authentication in your browser, then retry the push.' }
-Write-Host 'Repository updated successfully. The complete v0.9.1 project and hidden workflow were published.' -ForegroundColor Green
+Write-Host "Repository updated successfully. The complete v$Version project, movie wallpapers, and hidden workflow were published." -ForegroundColor Green
 Write-Host "Local Git working copy: $Destination"
 Write-Host 'Next: open GitHub Actions and run Build and publish Homebrew IPK.' -ForegroundColor Cyan

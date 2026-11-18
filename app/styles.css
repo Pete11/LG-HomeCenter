@@ -396,3 +396,9 @@ input[type=file] { font-size:17px; }
 @media (max-width:760px) { .library-title-row { flex-direction:column; align-items:flex-start; } .danger-text { margin-left:0; } }
 
 .wallpaper-image-meta { display:block; padding:0 2px 3px; color:rgba(255,255,255,.48); font-size:12px; line-height:1.35; }
+
+
+/* LG Home Center 1.0.0 — user-supplied offline movie wallpaper library */
+#legacyPersonalWallpaperTools[hidden] { display:none !important; }
+.movie-library-info .setting-note { margin:14px 0; padding:14px 16px; border-left:3px solid rgba(255,255,255,.55); background:rgba(255,255,255,.055); border-radius:0 8px 8px 0; }
+.movie-library-info .setting-note strong { color:#fff; }

@@ -8,6 +8,9 @@ $ZipPath = Join-Path $env:TEMP 'webOSTVjs-1.2.13.zip'
 $ExtractPath = Join-Path $env:TEMP 'webOSTVjs-1.2.13'
 $DistPath = Join-Path $ProjectRoot 'dist'
 
+$Generator = Join-Path $ProjectRoot 'GENERATE_MOVIE_LIBRARY.ps1'
+& $Generator
+if (-not $?) { throw 'Movie library generation failed.' }
 if (-not (Get-Command ares-package -ErrorAction SilentlyContinue)) {
     throw 'webOS CLI is missing. Install it with: npm install -g @webos-tools/cli@3.2.6'
 }
@@ -27,7 +30,11 @@ $null = Get-Content (Join-Path $AppPath 'appinfo.json') -Raw | ConvertFrom-Json
 if (-not (Test-Path (Join-Path $AppPath 'assets/wallpapers/alpine-lake-4k.jpg'))) { throw 'Bundled Alpine Lake wallpaper is missing.' }
 if (-not (Test-Path (Join-Path $AppPath 'assets/wallpapers/otherworld-desert-4k.jpg'))) { throw 'Bundled Otherworld Desert wallpaper is missing.' }
 $AppInfo = Get-Content (Join-Path $AppPath 'appinfo.json') -Raw | ConvertFrom-Json
-if ($AppInfo.version -ne '0.9.0') { throw "Expected appinfo version 0.9.0, found $($AppInfo.version)." }
+if ([string]$AppInfo.version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid appinfo version '$($AppInfo.version)'. Use semantic versioning such as 1.0.0." }
+$MovieFiles = @(Get-ChildItem (Join-Path $AppPath 'assets/wallpapers/movies') -File | Where-Object { $_.Extension -match '^\.(jpg|jpeg|png|bmp)$' })
+$MovieCount = $MovieFiles.Count
+$ThumbCount = (Get-ChildItem (Join-Path $AppPath 'assets/wallpapers/movies/thumbs') -Filter '*-thumb.jpg' -File | Measure-Object).Count
+if ($MovieCount -lt 37 -or $ThumbCount -ne $MovieCount) { throw "Expected at least 37 movie wallpapers and one thumbnail per image; found $MovieCount and $ThumbCount." }
 if (-not ($AppInfo.appCategory -contains 'home')) { throw 'appCategory home is required for Home Chooser.' }
 if (-not ($AppInfo.requiredPermissions -contains 'org.webosbrew.homechooser.applications')) { throw 'Home Chooser application permission is required.' }
 New-Item -ItemType Directory -Path $DistPath -Force | Out-Null

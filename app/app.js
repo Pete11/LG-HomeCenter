@@ -13,7 +13,7 @@
     textBrightness: 78, iconBrightness: 72, clockBrightness: 72, glassTransparency: 62, dockBlur: 16, glassTint: 'dark', glassGradient: 58,
     pixelShift: false, idleDim: true, screensaverEnabled: true, screensaverDelay: 5, screensaverMode: 'clock',
     autoStandby: 'off', scheduledPowerOffEnabled: false, scheduledPowerOff: '01:00', customCss: '', wallpaperUrl: '', personalWallpaperId: '',
-    wallpaperSlideshowEnabled: false, wallpaperSlideshowInterval: 10, wallpaperSlideshowSource: 'personal'
+    wallpaperSlideshowEnabled: false, wallpaperSlideshowInterval: 10, wallpaperSlideshowSource: 'movies'
   };
   const DEFAULT_WALLPAPER = 'assets/wallpapers/alpine-lake-4k.jpg';
   // Bundled images are always available offline. Online sources are optional and are checked before applying.
@@ -22,7 +22,7 @@
     { id: 'cinema-desert-bundled', title: 'Otherworld Desert', category: 'cinema', resolution: '3840 × 2160 · 4K', source: 'Original cinematic artwork · included offline', url: 'assets/wallpapers/otherworld-desert-4k.jpg', preview: 'assets/wallpapers/otherworld-desert-thumb.jpg', bundled: true },
     { id: 'cinema-noir-bundled', title: 'Neo-Noir City', category: 'cinema', resolution: '3840 × 2160 · scalable vector', source: 'Included offline', url: 'assets/wallpapers/neo-noir-city.svg', bundled: true },
     { id: 'cinema-poster-wall-bundled', title: 'Original Poster Wall', category: 'cinema', resolution: '3840 × 2160 · scalable vector', source: 'Original artwork · included offline', url: 'assets/wallpapers/poster-wall.svg', bundled: true }
-  ];
+  ].concat(Array.isArray(window.HOME_CENTER_MOVIE_PRESETS) ? window.HOME_CENTER_MOVIE_PRESETS : []);
   let installedApps = [];
   let serviceRequests = [];
   let settings = loadSettings();
@@ -51,6 +51,7 @@
       const merged = Object.assign(clone(DEFAULTS), saved, { apps });
       if (typeof merged.personalWallpaperId !== 'string') merged.personalWallpaperId = '';
       if (merged.wallpaperSlideshowSource === 'cloud') merged.wallpaperSlideshowSource = 'personal';
+      if (merged.wallpaperSlideshowSource === 'personal' && !merged.wallpaperSlideshowEnabled) merged.wallpaperSlideshowSource = 'movies';
       delete merged.cloudWallpaperFeedUrl;
       if (!Number.isFinite(Number(saved.glassTransparency))) merged.glassTransparency = DEFAULTS.glassTransparency;
       delete merged.dockOpacity;
@@ -308,7 +309,21 @@
   function renderWallpaperGallery() {
     const gallery = $('wallpaperGallery');
     if (!gallery) return;
-    const category = $('wallpaperCategory').value || 'nature';
+    const category = $('wallpaperCategory').value || 'movies';
+    const movieCount = WALLPAPER_PRESETS.filter(item => item.category === 'movies').length;
+    const includedCount = WALLPAPER_PRESETS.length;
+    const movieOption = Array.from($('wallpaperCategory').options).find(option => option.value === 'movies');
+    const movieSlideshowOption = Array.from($('wallpaperSlideshowSource').options).find(option => option.value === 'movies');
+    const allSlideshowOption = Array.from($('wallpaperSlideshowSource').options).find(option => option.value === 'bundled');
+    if (movieOption) movieOption.textContent = 'Movies · ' + movieCount + ' wallpapers';
+    if (movieSlideshowOption) movieSlideshowOption.textContent = 'Movies collection · ' + movieCount + ' wallpapers';
+    if (allSlideshowOption) allSlideshowOption.textContent = 'All included wallpapers · ' + includedCount + ' images';
+    const movieCountBadge = document.getElementById('movieWallpaperCount');
+    if (movieCountBadge) movieCountBadge.textContent = movieCount + ' images';
+    const categoryRecord = tvSelectRegistry.get($('wallpaperCategory'));
+    const sourceRecord = tvSelectRegistry.get($('wallpaperSlideshowSource'));
+    if (categoryRecord) refreshTvSelectOptions($('wallpaperCategory'));
+    if (sourceRecord) refreshTvSelectOptions($('wallpaperSlideshowSource'));
     gallery.innerHTML = '';
     WALLPAPER_PRESETS.filter(item => item.category === category).forEach(item => {
       const card = document.createElement('button');
@@ -361,13 +376,17 @@
       });
       gallery.appendChild(card);
     });
-    $('wallpaperGalleryStatus').textContent = 'All included wallpapers work offline. Upload your own movie posters and images below.';
+    const galleryMessages = { movies: movieCount + ' movie wallpapers from your collection are included offline.', nature: 'Nature wallpapers are included offline.', cinema: 'Original cinematic artwork is included offline.' };
+    $('wallpaperGalleryStatus').textContent = galleryMessages[category] || 'Included wallpapers work offline.';
   }
   async function collectSlideshowItems() {
-    const source = settings.wallpaperSlideshowSource || 'personal';
+    const source = settings.wallpaperSlideshowSource || 'movies';
     const items = [];
+    const categories = ['movies', 'nature', 'cinema'];
     if (source === 'all' || source === 'bundled') {
       WALLPAPER_PRESETS.forEach(item => items.push({ key: 'url:' + item.url, type: 'url', title: item.title, url: item.url }));
+    } else if (categories.includes(source)) {
+      WALLPAPER_PRESETS.filter(item => item.category === source).forEach(item => items.push({ key: 'url:' + item.url, type: 'url', title: item.title, url: item.url }));
     }
     if (source === 'all' || source === 'personal') {
       const records = await getPersonalWallpapers();
@@ -395,7 +414,7 @@
       getPersonalWallpapers().then(records => {
         if (!settings.wallpaperSlideshowEnabled) return;
         if (records.length < 2) {
-          if (status) status.textContent = 'Add at least two images to My Wallpaper Library to start the slideshow.';
+          if (status) status.textContent = 'Add at least two imported images or select the Movies collection to start the slideshow.';
           return;
         }
         schedule();
@@ -414,7 +433,7 @@
       const items = await collectSlideshowItems();
       if (items.length < 2) {
         const status = $('wallpaperSlideshowStatus');
-        if (status) status.textContent = 'Add at least two wallpapers to the selected source before slideshow can rotate.';
+        if (status) status.textContent = 'The selected wallpaper collection needs at least two images before slideshow can rotate.';
         return;
       }
       let currentKey = settings.personalWallpaperId ? 'personal:' + settings.personalWallpaperId : (settings.wallpaperUrl ? 'url:' + settings.wallpaperUrl : '');
@@ -683,7 +702,7 @@
     $('wallpaperUrl').value = settings.wallpaperUrl || '';
     $('wallpaperSlideshowEnabled').checked = !!settings.wallpaperSlideshowEnabled;
     $('wallpaperSlideshowInterval').value = String(settings.wallpaperSlideshowInterval || 10);
-    $('wallpaperSlideshowSource').value = settings.wallpaperSlideshowSource || 'personal';
+    $('wallpaperSlideshowSource').value = settings.wallpaperSlideshowSource || 'movies';
     document.querySelectorAll('select').forEach(syncTvSelect);
     ['textBrightness','iconBrightness','clockBrightness','glassTransparency','dockBlur','glassGradient'].forEach(id => {
       $(id).value = settings[id]; const suffix = id === 'dockBlur' ? 'px' : '%'; $(id + 'Value').textContent = settings[id] + suffix;
