@@ -14,6 +14,18 @@
     pixelShift: false, idleDim: true, screensaverEnabled: true, screensaverDelay: 5, screensaverMode: 'clock',
     autoStandby: 'off', scheduledPowerOffEnabled: false, scheduledPowerOff: '01:00', customCss: '', wallpaperUrl: ''
   };
+  const WALLPAPER_PRESETS = [
+    { id: 'nature-waterfall', title: 'Mountain Waterfall', category: 'nature', resolution: '3840 × 2160', source: 'WallpapersCraft', url: 'https://wallpaperscraft.com/download/mountains_waterfall_aerial_view_148198/3840x2160' },
+    { id: 'nature-mountain-lake', title: 'Mountain Lake', category: 'nature', resolution: '3840 × 2160', source: 'WallpapersCraft', url: 'https://wallpaperscraft.com/download/mountain_lake_forest_150577/3840x2160' },
+    { id: 'nature-lake-forest', title: 'Lake & Forest', category: 'nature', resolution: '3840 × 2160', source: 'WallpapersCraft', url: 'https://wallpaperscraft.com/download/lake_mountains_forest_152659/3840x2160' },
+    { id: 'nature-waterfall-rocks', title: 'Waterfall & Rocks', category: 'nature', resolution: '3840 × 2160', source: 'WallpapersCraft', url: 'https://wallpaperscraft.com/download/waterfall_body_of_water_water_203016/3840x2160' },
+    { id: 'cinema-blade-runner', title: 'Blade Runner 2049', category: 'cinema', resolution: '3840 × 2160', source: 'Wallpapers Den', url: 'https://images.wallpapersden.com/image/download/blade-runner-2049-still_amxtZ2aUmZqaraWkpJRobWllrWdma2U.jpg' },
+    { id: 'cinema-interstellar', title: 'Interstellar · Ice Planet', category: 'cinema', resolution: '3840 × 2160', source: 'Alpha Coders', url: 'https://images3.alphacoders.com/551/551456.jpg' },
+    { id: 'cinema-knock-cabin', title: 'Knock at the Cabin', category: 'cinema', resolution: '3840 × 2400 · 5K', source: '10Wallpaper', url: 'https://www.10wallpaper.com/wallpaper/3840x2400/2305/Knock_at_the_Cabin_2023_Films_5K_Poster_3840x2400.jpg' },
+    { id: 'cinema-blade-runner-8k', title: 'Blade Runner 2049 · 8K', category: 'cinema', resolution: '7680 × 4320 · 8K', source: 'Wallpapers Den', url: 'https://images.wallpapersden.com/image/download/ryan-gosling-blade-runner-2049-still_am5sbW2UmZqaraWkpJRsa21lrWloZ2U.jpg' }
+  ];
+  let installedApps = [];
+  let serviceRequests = [];
   let settings = loadSettings();
   let weatherTimer = null;
   let idleTimer = null;
@@ -84,11 +96,9 @@
       $('weatherTemp').textContent = weatherState.temperature + '°';
       $('weatherIcon').textContent = weatherSymbol(weatherState.code);
       $('weatherDetail').textContent = weatherState.description;
-      $('weatherCity').textContent = String(place.name).toUpperCase();
       $('screensaverWeather').textContent = weatherState.temperature + '° · ' + weatherState.description.toUpperCase();
     } catch (error) {
       $('weatherDetail').textContent = 'Weather unavailable';
-      $('weatherCity').textContent = city.toUpperCase();
     }
   }
   function formatForecastDate(isoDate) {
@@ -162,6 +172,85 @@
     if (!style) { style = document.createElement('style'); style.id = 'userCustomCss'; document.head.appendChild(style); }
     style.textContent = String(css || '').slice(0, 12000);
   }
+  function requestWebOSService(uri, method, parameters, onSuccess, onFailure) {
+    if (!window.webOS || !webOS.service || typeof webOS.service.request !== 'function') {
+      if (typeof onFailure === 'function') onFailure({ errorText: 'webOSTV.js is not available in this build.' });
+      return null;
+    }
+    let request = null;
+    request = webOS.service.request(uri, {
+      method: method, parameters: parameters || {},
+      onSuccess: function (response) { if (typeof onSuccess === 'function') onSuccess(response || {}); },
+      onFailure: function (error) { if (typeof onFailure === 'function') onFailure(error || {}); },
+      onComplete: function () { serviceRequests = serviceRequests.filter(item => item !== request); }
+    });
+    if (request) serviceRequests.push(request);
+    return request;
+  }
+  function parseCommandJson(output) {
+    const text = String(output || '').trim();
+    if (!text) throw new Error('The TV returned an empty app list.');
+    const first = text.indexOf('{'); const last = text.lastIndexOf('}');
+    if (first < 0 || last <= first) throw new Error(text.slice(0, 260) || 'Could not read the app list.');
+    return JSON.parse(text.slice(first, last + 1));
+  }
+  function loadInstalledApps() {
+    $('installedAppsStatus').textContent = 'Reading the installed app list…';
+    $('loadInstalledApps').disabled = true;
+    const command = "luna-send -n 1 -f luna://com.webos.applicationManager/listLaunchPoints '{}' 2>/dev/null || luna-send -n 1 -f luna://com.webos.service.applicationmanager/listLaunchPoints '{}'";
+    requestWebOSService('luna://org.webosbrew.hbchannel.service', 'exec', { command: command }, function (response) {
+      $('loadInstalledApps').disabled = false;
+      try {
+        if (response.error) throw new Error(String(response.error));
+        const payload = parseCommandJson(response.stdoutString || (response.stdoutBytes && atob(response.stdoutBytes)) || '');
+        const entries = Array.isArray(payload.launchPoints) ? payload.launchPoints : (Array.isArray(payload.apps) ? payload.apps : []);
+        const unique = new Map();
+        entries.forEach(item => {
+          const id = String(item.id || item.appId || item.appid || '').trim();
+          if (!id || id === 'com.homecenter.launcher') return;
+          if (!unique.has(id)) unique.set(id, { id: id, title: String(item.title || item.appName || item.name || id).trim() });
+        });
+        installedApps = Array.from(unique.values()).sort((a,b) => a.title.localeCompare(b.title));
+        if (!installedApps.length) throw new Error('No launchable apps were returned. Check Homebrew root access.');
+        $('installedAppsStatus').textContent = installedApps.length + ' apps found on this TV.';
+        renderAppEditor();
+        toast('Installed apps loaded. Select an app for each shortcut.');
+      } catch (error) {
+        $('installedAppsStatus').textContent = 'Could not load installed apps.';
+        toast('App list error: ' + (error.message || 'Unknown error'));
+      }
+    }, function (error) {
+      $('loadInstalledApps').disabled = false;
+      $('installedAppsStatus').textContent = 'Homebrew root service unavailable.';
+      toast('Could not read installed apps. Open Homebrew Channel and verify root status.');
+      console.warn('Homebrew app-list request failed:', error);
+    });
+  }
+  function renderWallpaperGallery() {
+    const gallery = $('wallpaperGallery'); if (!gallery) return;
+    const category = $('wallpaperCategory').value || 'nature';
+    gallery.innerHTML = '';
+    WALLPAPER_PRESETS.filter(item => item.category === category).forEach(item => {
+      const card = document.createElement('button'); card.type = 'button'; card.className = 'wallpaper-card';
+      if (settings.wallpaperUrl === item.url) card.classList.add('selected');
+      const image = document.createElement('img'); image.src = item.url; image.alt = item.title; image.loading = 'lazy'; image.decoding = 'async';
+      const title = document.createElement('span'); title.className = 'wallpaper-card-title'; title.textContent = item.title;
+      const meta = document.createElement('span'); meta.className = 'wallpaper-card-meta'; meta.textContent = item.resolution + ' · ' + item.source;
+      card.append(image, title, meta);
+      card.addEventListener('click', () => {
+        settings.wallpaperUrl = item.url;
+        $('wallpaperUrl').value = item.url;
+        localStorage.removeItem('homecenter.wallpaper.blob');
+        applyWallpaperUrl(item.url); saveSettings();
+        gallery.querySelectorAll('.wallpaper-card').forEach(node => node.classList.remove('selected'));
+        card.classList.add('selected');
+        $('wallpaperGalleryStatus').textContent = item.title + ' selected (' + item.resolution + ').';
+        toast('Wallpaper applied: ' + item.title);
+      });
+      gallery.appendChild(card);
+    });
+    $('wallpaperGalleryStatus').textContent = 'Choose a preset or use your own image below. External images require internet access.';
+  }
   function renderApps() {
     const row = $('appRow'); row.innerHTML = '';
     settings.apps = settings.apps.slice(0, 6);
@@ -199,12 +288,16 @@
   }
   function launchApp(index) {
     const app = settings.apps[index];
-    if (!app || !String(app.appId || '').trim()) { openSettings('apps'); toast('Enter this app’s ID in Settings → Shortcuts.'); return; }
-    const params = { id: String(app.appId).trim(), params: {} };
+    if (!app || !String(app.appId || '').trim()) { toast('This shortcut has no app assigned. Open Settings → Shortcuts and select an installed app.'); return; }
+    const appId = String(app.appId).trim();
     if (window.webOS && webOS.service && typeof webOS.service.request === 'function') {
-      webOS.service.request('luna://com.webos.applicationManager', { method: 'launch', parameters: params,
-        onSuccess: function (response) { if (response && response.returnValue === false) toast('Launch failed: ' + (response.errorText || 'webOS error')); },
-        onFailure: function (error) { toast('Could not launch the app. Check its ID.'); console.warn(error); }
+      requestWebOSService('luna://com.webos.applicationManager', 'launch', { id: appId, params: {} }, function (response) {
+        if (response.returnValue === false) {
+          toast('Launch failed (' + (response.errorCode || 'webOS') + '): ' + (response.errorText || 'Application Manager rejected the app ID.'));
+        }
+      }, function (error) {
+        toast('Could not launch ' + (app.name || appId) + ': ' + (error.errorText || error.message || 'webOS service error'));
+        console.warn('Application launch failed:', error);
       });
       return;
     }
@@ -212,16 +305,16 @@
       const bridge = new window.PalmServiceBridge();
       bridge.onservicecallback = function (message) {
         try { const result = JSON.parse(message); if (result.returnValue === false) toast('Launch failed: ' + (result.errorText || 'webOS error')); }
-        catch (_) { toast('Response received from webOS.'); }
+        catch (_) { toast('App launch request sent.'); }
       };
-      bridge.call('luna://com.webos.applicationManager/launch', JSON.stringify(params));
+      bridge.call('luna://com.webos.applicationManager/launch', JSON.stringify({ id: appId, params: {} }));
       return;
     }
-    toast('App launching is available only on a webOS TV.');
+    toast('webOS launch API is unavailable. This build needs the official webOSTV.js runtime.');
   }
   function openSettings(tab) {
     closeScreensaver(); $('settingsOverlay').classList.remove('hidden'); $('settingsOverlay').setAttribute('aria-hidden', 'false');
-    selectTab(tab || 'general'); renderAppEditor(); hydrateSettingsForm();
+    selectTab(tab || 'general'); renderAppEditor(); hydrateSettingsForm(); renderWallpaperGallery();
     const first = document.querySelector('.settings-tab.active'); if (first) first.focus();
   }
   function closeSettings() {
@@ -237,18 +330,31 @@
     const editor = $('appEditor'); editor.innerHTML = '';
     settings.apps.forEach((app, index) => {
       const row = document.createElement('div'); row.className = 'app-edit-row';
+      const header = document.createElement('div'); header.className = 'app-edit-head';
       const label = document.createElement('label'); label.textContent = 'SHORTCUT ' + (index + 1);
-      const name = document.createElement('input'); name.type = 'text'; name.maxLength = 22; name.value = app.name || ''; name.placeholder = 'App name'; name.setAttribute('aria-label', 'Shortcut name ' + (index + 1));
-      const id = document.createElement('input'); id.type = 'text'; id.maxLength = 120; id.value = app.appId || ''; id.placeholder = 'webOS app ID'; id.setAttribute('aria-label', 'App ID ' + (index + 1));
       const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'remove-shortcut'; remove.textContent = '×'; remove.title = 'Remove shortcut'; remove.setAttribute('aria-label', 'Remove shortcut ' + (index + 1));
+      const picker = document.createElement('select'); picker.className = 'installed-app-picker'; picker.setAttribute('aria-label', 'Select installed app for shortcut ' + (index + 1));
+      const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = installedApps.length ? 'Select an installed app…' : 'Load installed apps from TV first…'; picker.appendChild(placeholder);
+      installedApps.forEach(item => { const option = document.createElement('option'); option.value = item.id; option.textContent = item.title + '  ·  ' + item.id; picker.appendChild(option); });
+      if (app.appId && !installedApps.some(item => item.id === app.appId)) { const current = document.createElement('option'); current.value = app.appId; current.textContent = 'Current ID · ' + app.appId; picker.appendChild(current); }
+      picker.value = app.appId || '';
+      const fields = document.createElement('div'); fields.className = 'app-edit-fields';
+      const name = document.createElement('input'); name.type = 'text'; name.maxLength = 22; name.value = app.name || ''; name.placeholder = 'Tile label'; name.setAttribute('aria-label', 'Shortcut name ' + (index + 1));
+      const id = document.createElement('input'); id.type = 'text'; id.maxLength = 120; id.value = app.appId || ''; id.placeholder = 'Or enter app ID manually'; id.setAttribute('aria-label', 'App ID ' + (index + 1));
+      picker.addEventListener('change', () => {
+        const selected = installedApps.find(item => item.id === picker.value);
+        settings.apps[index].appId = picker.value; id.value = picker.value;
+        if (selected) { settings.apps[index].name = selected.title.slice(0,22); name.value = settings.apps[index].name; }
+        saveSettings(); renderApps(); toast(selected ? selected.title + ' assigned to shortcut.' : 'Shortcut app cleared.');
+      });
       name.addEventListener('change', () => { settings.apps[index].name = name.value.trim() || ('Shortcut ' + (index + 1)); saveSettings(); renderApps(); });
-      id.addEventListener('change', () => { settings.apps[index].appId = id.value.trim(); saveSettings(); });
+      id.addEventListener('change', () => { settings.apps[index].appId = id.value.trim(); picker.value = settings.apps[index].appId; saveSettings(); });
       remove.addEventListener('click', () => {
         if (settings.apps.length <= 1) { toast('At least one shortcut must remain in the dock.'); return; }
         settings.apps.splice(index, 1); currentFocus = Math.min(currentFocus, settings.apps.length - 1);
         saveSettings(); renderAppEditor(); renderApps(); updateShortcutCount(); toast('Shortcut removed.');
       });
-      row.append(label, remove, name, id); editor.appendChild(row);
+      header.append(label, remove); fields.append(name, id); row.append(header, picker, fields); editor.appendChild(row);
     });
     updateShortcutCount();
   }
@@ -280,6 +386,8 @@
     document.querySelectorAll('.settings-tab').forEach(tab => tab.addEventListener('click', () => selectTab(tab.dataset.tab)));
     $('settingsButton').addEventListener('click', () => openSettings('general'));
     $('addShortcut').addEventListener('click', addShortcut);
+    $('loadInstalledApps').addEventListener('click', loadInstalledApps);
+    $('wallpaperCategory').addEventListener('change', renderWallpaperGallery);
     $('closeSettings').addEventListener('click', closeSettings); $('doneSettings').addEventListener('click', closeSettings);
     $('weatherCityInput').addEventListener('change', () => { settings.city = $('weatherCityInput').value.trim() || 'Bucharest'; saveSettings(); scheduleWeather(); });
     $('weatherInterval').addEventListener('change', () => { settings.weatherInterval = Number($('weatherInterval').value); saveSettings(); scheduleWeather(); });

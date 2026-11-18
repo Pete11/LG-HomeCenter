@@ -8,5 +8,8 @@
   "icon": "icon.png",
   "largeIcon": "largeIcon.png",
   "resolution": "1920x1080",
-  "transparent": false
+  "transparent": false,
+  "appCategory": [
+    "home"
+  ]
 }

@@ -11,11 +11,6 @@
   <main id="home" class="home-screen">
     <div class="wallpaper-shade"></div>
     <header class="topbar">
-      <div class="brand-block">
-        <div class="brand-kicker">PERSONAL TV INTERFACE</div>
-        <div class="brand-title" id="brandTitle">HOME CENTER</div>
-        <div class="brand-subtitle" id="brandSubtitle">YOUR SCREEN. YOUR RULES.</div>
-      </div>
       <div class="top-right">
         <button type="button" class="weather-display" id="weatherDisplay" aria-label="Open 10-day weather forecast" aria-haspopup="dialog" aria-controls="forecastOverlay" title="Open 10-day forecast">
           <div class="weather-main"><span class="weather-icon" id="weatherIcon">◌</span><span class="weather-temp" id="weatherTemp">--°</span></div>
@@ -36,7 +31,6 @@
     </section>
 
     <footer class="footerbar">
-      <div class="footer-left"><span class="live-dot"></span><span id="weatherCity">BUCHAREST</span><span class="footer-separator">/</span><span>HOME CENTER 0.5</span></div>
       <button id="settingsButton" class="settings-button" type="button"><span class="settings-glyph">⚙</span> SETTINGS</button>
     </footer>
   </main>
@@ -85,7 +79,15 @@
         <div class="settings-content">
           <section class="settings-page active" data-page="general">
             <div class="setting-card">
-              <h2>Wallpaper</h2>
+              <h2>4K Wallpaper Library</h2>
+              <p>Choose a cinematic movie wallpaper or a 4K nature scene. Presets are streamed from their original sources; an internet connection is required.</p>
+              <label class="field-label" for="wallpaperCategory">Gallery</label>
+              <select id="wallpaperCategory"><option value="nature">Nature · 4K</option><option value="cinema">Movies & Cinematic · 4K+</option></select>
+              <div id="wallpaperGallery" class="wallpaper-gallery" aria-label="Wallpaper library"></div>
+              <div id="wallpaperGalleryStatus" class="muted wallpaper-gallery-status">Select a wallpaper to apply it.</div>
+            </div>
+            <div class="setting-card">
+              <h2>Custom Wallpaper</h2>
               <p>Choose a custom image or enter a direct image URL.</p>
               <label class="field-label" for="wallpaperUrl">Wallpaper URL</label>
               <div class="inline-field"><input id="wallpaperUrl" type="url" placeholder="https://.../wallpaper.jpg"><button id="applyWallpaperUrl" class="small-action">Apply</button></div>
@@ -100,7 +102,7 @@
           </section>
 
           <section class="settings-page" data-page="apps">
-            <div class="setting-card"><h2>Dock shortcuts</h2><p>Manage up to six shortcuts. Enter each app name and its exact webOS application ID. New shortcuts can only be added here, in Settings.</p><div id="appEditor" class="app-editor"></div><div class="shortcut-editor-actions"><span id="shortcutCount" class="muted">5 of 6 shortcuts</span><button id="addShortcut" class="small-action" type="button">+ Add shortcut</button></div></div>
+            <div class="setting-card"><h2>Dock shortcuts</h2><p>Load apps installed on this TV, select one for each tile, or enter an app ID manually. Select an app here; OK on the Home screen will launch it.</p><div class="installed-app-tools"><button id="loadInstalledApps" class="small-action" type="button">Load installed apps from TV</button><span id="installedAppsStatus" class="muted" aria-live="polite">Installed app list not loaded.</span></div><div id="appEditor" class="app-editor"></div><div class="shortcut-editor-actions"><span id="shortcutCount" class="muted">5 of 6 shortcuts</span><button id="addShortcut" class="small-action" type="button">+ Add shortcut</button></div></div>
           </section>
 
           <section class="settings-page" data-page="oled">
@@ -138,7 +140,7 @@
           </section>
 
           <section class="settings-page" data-page="advanced">
-            <div class="setting-card"><h2>Custom CSS</h2><p>Additional CSS rules. Avoid aggressive selectors that could hide controls or settings.</p><textarea id="customCss" spellcheck="false" placeholder=".brand-title { letter-spacing: .5em; }"></textarea><button id="applyCustomCss" class="small-action">Apply CSS</button></div>
+            <div class="setting-card"><h2>Custom CSS</h2><p>Additional CSS rules. Avoid aggressive selectors that could hide controls or settings.</p><textarea id="customCss" spellcheck="false" placeholder=".clock-time { letter-spacing: .05em; }"></textarea><button id="applyCustomCss" class="small-action">Apply CSS</button></div>
             <div class="setting-card"><h2>Configuration</h2><p>Export your settings to a JSON file or import a previously saved backup.</p><div class="button-row"><button id="exportSettings" class="small-action">Export settings</button><label class="small-action file-button" for="importSettingsFile">Import settings</label><input id="importSettingsFile" type="file" accept="application/json" hidden></div></div>
             <div class="setting-card"><h2>System information</h2><p>Home Center 0.5 · webOS TV prototype · Up to 6 shortcuts · Local settings</p><p class="muted">The app does not replace the default HOME screen or change TV power settings yet.</p></div>
           </section>
