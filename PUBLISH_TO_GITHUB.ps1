@@ -15,7 +15,7 @@ if (-not (Test-Path (Join-Path $ProjectSource 'app\appinfo.json'))) {
     throw 'The archive is incomplete: app\appinfo.json is missing.'
 }
 $Info = Get-Content (Join-Path $ProjectSource 'app\appinfo.json') -Raw | ConvertFrom-Json
-if ($Info.version -ne '0.8.0') { throw "Expected version 0.8.0, found $($Info.version)." }
+if ($Info.version -ne '0.9.1') { throw "Expected version 0.9.1, found $($Info.version)." }
 
 if (-not (Test-Path $Destination)) {
     Write-Host "Cloning $RepositoryUrl ..." -ForegroundColor Cyan
@@ -57,13 +57,13 @@ git -C $Destination add --all
 if ($LASTEXITCODE -ne 0) { throw 'git add failed.' }
 $Changes = git -C $Destination status --porcelain
 if ([string]::IsNullOrWhiteSpace(($Changes -join ''))) {
-    Write-Host 'The repository already matches this v0.8.0 archive. No commit is needed.' -ForegroundColor Yellow
+    Write-Host 'The repository already matches this v0.9.1 archive. No commit is needed.' -ForegroundColor Yellow
     exit 0
 }
-git -C $Destination commit -m 'Replace repository with LG Home Center v0.8.0 full project'
+git -C $Destination commit -m 'Publish LG Home Center v0.9.1 local wallpaper library'
 if ($LASTEXITCODE -ne 0) { throw 'git commit failed. Check Git user.name and user.email.' }
 git -C $Destination push origin main
 if ($LASTEXITCODE -ne 0) { throw 'git push failed. Complete GitHub authentication in your browser, then retry the push.' }
-Write-Host 'Repository updated successfully. The complete v0.8.0 project and hidden workflow were published.' -ForegroundColor Green
+Write-Host 'Repository updated successfully. The complete v0.9.1 project and hidden workflow were published.' -ForegroundColor Green
 Write-Host "Local Git working copy: $Destination"
 Write-Host 'Next: open GitHub Actions and run Build and publish Homebrew IPK.' -ForegroundColor Cyan

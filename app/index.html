@@ -88,18 +88,33 @@
               <div id="wallpaperGallery" class="wallpaper-gallery" aria-label="Wallpaper library"></div>
               <div id="wallpaperGalleryStatus" class="muted wallpaper-gallery-status">Select a wallpaper to apply it.</div>
             </div>
+            <div class="setting-card personal-library-panel">
+              <div class="library-title-row">
+                <div><h2>My Wallpaper Library</h2><p>Build a private wallpaper collection on this TV. Add movie posters, film stills, and 4K images from the file picker. You can select several images at once.</p></div>
+                <span id="personalWallpaperCount" class="library-count">0 images</span>
+              </div>
+              <label class="field-label" for="wallpaperUrl">Apply one direct image URL (optional)</label>
+              <div class="inline-field"><input id="wallpaperUrl" type="url" placeholder="https://.../wallpaper.jpg"><button id="applyWallpaperUrl" class="small-action" type="button">Apply URL</button></div>
+              <div class="library-upload-row">
+                <label class="small-action file-button wallpaper-upload-button" for="wallpaperFile" tabindex="0" role="button">＋ Add images</label>
+                <input id="wallpaperFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp,image/avif,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif" multiple class="wallpaper-file-hidden">
+                <button id="refreshPersonalWallpapers" class="small-action" type="button">Refresh library</button>
+                <button id="clearPersonalWallpapers" class="text-action danger-text" type="button">Clear all images</button>
+              </div>
+              <p class="setting-note">Images are stored locally in this app on the TV using IndexedDB. Up to 30 MB per image. JPG, PNG, WebP, GIF, BMP and AVIF are accepted when supported by the TV. Keep the app installed to retain the library; uninstalling the app or clearing its data can remove it.</p>
+              <div id="personalWallpaperGallery" class="wallpaper-gallery personal-wallpaper-gallery" aria-label="My wallpaper library"></div>
+              <div id="personalWallpaperStatus" class="muted wallpaper-gallery-status" aria-live="polite">Your personal wallpaper library is empty. Select Add images to import posters or photos.</div>
+              <button id="clearWallpaper" class="text-action" type="button">Restore default wallpaper</button>
+            </div>
             <div class="setting-card">
-              <h2>Custom Wallpaper</h2>
-              <p>Upload your own movie posters, film stills, or any image from a USB drive or local file picker. Selected images are saved on this TV.</p>
-              <label class="field-label" for="wallpaperUrl">Wallpaper URL</label>
-              <div class="inline-field"><input id="wallpaperUrl" type="url" placeholder="https://.../wallpaper.jpg"><button id="applyWallpaperUrl" class="small-action">Apply</button></div>
-              <label class="field-label" for="wallpaperFile">Upload your wallpapers / movie posters</label>
-              <input id="wallpaperFile" type="file" accept="image/*" multiple class="file-input">
-              <p class="setting-note">Select one or several images. Common browser-supported image formats are accepted, up to 30 MB per image. Each image is checked by the TV before it is stored in your Personal Wallpapers collection.</p>
-              <div class="personal-wallpaper-heading"><h3>Personal Wallpapers</h3><span id="personalWallpaperCount" class="muted">0 images</span></div>
-              <div id="personalWallpaperGallery" class="wallpaper-gallery personal-wallpaper-gallery" aria-label="Personal wallpapers"></div>
-              <div id="personalWallpaperStatus" class="muted wallpaper-gallery-status">Your uploaded posters and images will appear here.</div>
-              <button id="clearWallpaper" class="text-action">Restore default wallpaper</button>
+              <h2>Wallpaper Slideshow</h2>
+              <p>Rotate automatically through your local library. The wallpaper changes only while Home Center is active.</p>
+              <label class="toggle-row"><span>Enable wallpaper slideshow</span><input id="wallpaperSlideshowEnabled" type="checkbox"></label>
+              <label class="field-label" for="wallpaperSlideshowInterval">Change wallpaper every</label>
+              <select id="wallpaperSlideshowInterval"><option value="1">1 minute · test</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select>
+              <label class="field-label" for="wallpaperSlideshowSource">Slideshow source</label>
+              <select id="wallpaperSlideshowSource"><option value="personal">My library only</option><option value="all">My library + included wallpapers</option><option value="bundled">Included wallpapers only</option></select>
+              <div id="wallpaperSlideshowStatus" class="muted wallpaper-gallery-status" aria-live="polite">Slideshow is off. Add at least two images to your library to rotate personal wallpapers.</div>
             </div>
             <div class="setting-card two-col">
               <div><h2>Weather</h2><p>Location used for current weather conditions.</p><label class="field-label" for="weatherCityInput">City</label><input id="weatherCityInput" type="text" placeholder="Bucharest"></div>
@@ -167,7 +182,7 @@
           <section class="settings-page" data-page="advanced">
             <div class="setting-card"><h2>Custom CSS</h2><p>Additional CSS rules. Avoid aggressive selectors that could hide controls or settings.</p><textarea id="customCss" spellcheck="false" placeholder=".clock-time { letter-spacing: .05em; }"></textarea><button id="applyCustomCss" class="small-action">Apply CSS</button></div>
             <div class="setting-card"><h2>Configuration</h2><p>Export your settings to a JSON file or import a previously saved backup.</p><div class="button-row"><button id="exportSettings" class="small-action">Export settings</button><label class="small-action file-button" for="importSettingsFile">Import settings</label><input id="importSettingsFile" type="file" accept="application/json" hidden></div></div>
-            <div class="setting-card"><h2>System information</h2><p>Home Center 0.8.0 · webOS TV app · Up to 6 shortcuts · Local settings</p><p class="muted">The HOME button is assigned through Home Chooser. TV power controls still require separate root-level integration.</p></div>
+            <div class="setting-card"><h2>System information</h2><p>Home Center 0.9.0 · webOS TV app · Up to 6 shortcuts · Local settings</p><p class="muted">The HOME button is assigned through Home Chooser. TV power controls still require separate root-level integration.</p></div>
           </section>
         </div>
         <div class="settings-actions"><span id="saveState">Settings are saved automatically on this device.</span><button id="doneSettings" class="primary-action">Done</button></div>

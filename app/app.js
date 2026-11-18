@@ -12,7 +12,8 @@
     ],
     textBrightness: 78, iconBrightness: 72, clockBrightness: 72, glassTransparency: 62, dockBlur: 16, glassTint: 'dark', glassGradient: 58,
     pixelShift: false, idleDim: true, screensaverEnabled: true, screensaverDelay: 5, screensaverMode: 'clock',
-    autoStandby: 'off', scheduledPowerOffEnabled: false, scheduledPowerOff: '01:00', customCss: '', wallpaperUrl: '', personalWallpaperId: ''
+    autoStandby: 'off', scheduledPowerOffEnabled: false, scheduledPowerOff: '01:00', customCss: '', wallpaperUrl: '', personalWallpaperId: '',
+    wallpaperSlideshowEnabled: false, wallpaperSlideshowInterval: 10, wallpaperSlideshowSource: 'personal'
   };
   const DEFAULT_WALLPAPER = 'assets/wallpapers/alpine-lake-4k.jpg';
   // Bundled images are always available offline. Online sources are optional and are checked before applying.
@@ -26,6 +27,8 @@
   let serviceRequests = [];
   let settings = loadSettings();
   let weatherTimer = null;
+  let wallpaperSlideshowTimer = null;
+  let wallpaperSlideshowBusy = false;
   let idleTimer = null;
   let dimTimer = null;
   let toastTimer = null;
@@ -47,6 +50,8 @@
       if (!apps.length) apps = clone(DEFAULTS.apps);
       const merged = Object.assign(clone(DEFAULTS), saved, { apps });
       if (typeof merged.personalWallpaperId !== 'string') merged.personalWallpaperId = '';
+      if (merged.wallpaperSlideshowSource === 'cloud') merged.wallpaperSlideshowSource = 'personal';
+      delete merged.cloudWallpaperFeedUrl;
       if (!Number.isFinite(Number(saved.glassTransparency))) merged.glassTransparency = DEFAULTS.glassTransparency;
       delete merged.dockOpacity;
       return merged;
@@ -358,6 +363,90 @@
     });
     $('wallpaperGalleryStatus').textContent = 'All included wallpapers work offline. Upload your own movie posters and images below.';
   }
+  async function collectSlideshowItems() {
+    const source = settings.wallpaperSlideshowSource || 'personal';
+    const items = [];
+    if (source === 'all' || source === 'bundled') {
+      WALLPAPER_PRESETS.forEach(item => items.push({ key: 'url:' + item.url, type: 'url', title: item.title, url: item.url }));
+    }
+    if (source === 'all' || source === 'personal') {
+      const records = await getPersonalWallpapers();
+      records.forEach(record => items.push({ key: 'personal:' + record.id, type: 'personal', id: record.id, title: record.name }));
+    }
+    const seen = new Set();
+    return items.filter(item => { if (seen.has(item.key)) return false; seen.add(item.key); return true; });
+  }
+  function startWallpaperSlideshow() {
+    clearInterval(wallpaperSlideshowTimer);
+    wallpaperSlideshowTimer = null;
+    if (!settings.wallpaperSlideshowEnabled) {
+      const status = $('wallpaperSlideshowStatus');
+      if (status) status.textContent = 'Slideshow is off. Enable it to rotate through your selected wallpaper library.';
+      return;
+    }
+    const interval = Math.max(1, Number(settings.wallpaperSlideshowInterval) || 10);
+    const status = $('wallpaperSlideshowStatus');
+    if (status) status.textContent = 'Slideshow is on · changes every ' + interval + ' minute(s).';
+    const schedule = () => {
+      if (!settings.wallpaperSlideshowEnabled || wallpaperSlideshowTimer) return;
+      wallpaperSlideshowTimer = setInterval(() => advanceWallpaperSlideshow(), interval * 60000);
+    };
+    if (settings.wallpaperSlideshowSource === 'personal') {
+      getPersonalWallpapers().then(records => {
+        if (!settings.wallpaperSlideshowEnabled) return;
+        if (records.length < 2) {
+          if (status) status.textContent = 'Add at least two images to My Wallpaper Library to start the slideshow.';
+          return;
+        }
+        schedule();
+      }).catch(() => {
+        if (status) status.textContent = 'The personal wallpaper library could not be read.';
+      });
+    } else {
+      schedule();
+    }
+  }
+  async function advanceWallpaperSlideshow() {
+    if (wallpaperSlideshowBusy || !settings.wallpaperSlideshowEnabled) return;
+    if (!$('settingsOverlay').classList.contains('hidden') || !$('forecastOverlay').classList.contains('hidden')) return;
+    wallpaperSlideshowBusy = true;
+    try {
+      const items = await collectSlideshowItems();
+      if (items.length < 2) {
+        const status = $('wallpaperSlideshowStatus');
+        if (status) status.textContent = 'Add at least two wallpapers to the selected source before slideshow can rotate.';
+        return;
+      }
+      let currentKey = settings.personalWallpaperId ? 'personal:' + settings.personalWallpaperId : (settings.wallpaperUrl ? 'url:' + settings.wallpaperUrl : '');
+      let currentIndex = items.findIndex(item => item.key === currentKey);
+      let nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % items.length;
+      let attempts = 0;
+      while (attempts < items.length) {
+        const item = items[nextIndex];
+        const applied = item.type === 'personal' ? await applyPersonalWallpaper(item.id, true) : await applyWallpaperUrl(item.url);
+        if (applied) {
+          if (item.type === 'url') {
+            settings.wallpaperUrl = item.url;
+            settings.personalWallpaperId = '';
+            $('wallpaperUrl').value = /^https?:\/\//i.test(item.url) ? item.url : '';
+            await deleteWallpaperBlob();
+            saveSettings();
+          }
+          const status = $('wallpaperSlideshowStatus');
+          if (status) status.textContent = 'Now showing: ' + item.title + ' · next change in ' + (Number(settings.wallpaperSlideshowInterval) || 10) + ' minute(s).';
+          return;
+        }
+        nextIndex = (nextIndex + 1) % items.length;
+        attempts += 1;
+      }
+      toast('Slideshow could not load any of the next wallpapers.');
+    } catch (error) {
+      console.warn('Wallpaper slideshow failed:', error);
+      toast('Wallpaper slideshow error: ' + (error.message || 'unknown error'));
+    } finally {
+      wallpaperSlideshowBusy = false;
+    }
+  }
   function renderApps() {
     const row = $('appRow'); row.innerHTML = '';
     settings.apps = settings.apps.slice(0, 6);
@@ -592,6 +681,10 @@
   function hydrateSettingsForm() {
     $('weatherCityInput').value = settings.city || 'Bucharest'; $('weatherInterval').value = String(settings.weatherInterval || 30);
     $('wallpaperUrl').value = settings.wallpaperUrl || '';
+    $('wallpaperSlideshowEnabled').checked = !!settings.wallpaperSlideshowEnabled;
+    $('wallpaperSlideshowInterval').value = String(settings.wallpaperSlideshowInterval || 10);
+    $('wallpaperSlideshowSource').value = settings.wallpaperSlideshowSource || 'personal';
+    document.querySelectorAll('select').forEach(syncTvSelect);
     ['textBrightness','iconBrightness','clockBrightness','glassTransparency','dockBlur','glassGradient'].forEach(id => {
       $(id).value = settings[id]; const suffix = id === 'dockBlur' ? 'px' : '%'; $(id + 'Value').textContent = settings[id] + suffix;
     });
@@ -634,6 +727,15 @@
       toast('Wallpaper updated.');
     });
     $('wallpaperFile').addEventListener('change', handleWallpaperFiles);
+    const wallpaperUploadLabel = document.querySelector('label[for="wallpaperFile"]');
+    if (wallpaperUploadLabel) wallpaperUploadLabel.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); $('wallpaperFile').click(); }
+    });
+    $('refreshPersonalWallpapers').addEventListener('click', refreshPersonalWallpaperLibrary);
+    $('clearPersonalWallpapers').addEventListener('click', clearPersonalWallpaperLibraryWithConfirm);
+    $('wallpaperSlideshowEnabled').addEventListener('change', () => { settings.wallpaperSlideshowEnabled = $('wallpaperSlideshowEnabled').checked; saveSettings(); startWallpaperSlideshow(); });
+    $('wallpaperSlideshowInterval').addEventListener('change', () => { settings.wallpaperSlideshowInterval = Number($('wallpaperSlideshowInterval').value) || 10; saveSettings(); startWallpaperSlideshow(); });
+    $('wallpaperSlideshowSource').addEventListener('change', () => { settings.wallpaperSlideshowSource = $('wallpaperSlideshowSource').value || 'all'; saveSettings(); startWallpaperSlideshow(); });
     $('clearWallpaper').addEventListener('click', async () => {
       await deleteWallpaperBlob();
       settings.wallpaperUrl = DEFAULT_WALLPAPER;
@@ -711,9 +813,9 @@
   function createId() {
     return 'wallpaper-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
   }
-  async function savePersonalWallpaper(file) {
+  async function savePersonalWallpaper(file, dimensions) {
     const db = await openDb();
-    const record = { id: createId(), name: String(file.name || 'Custom wallpaper').slice(0, 90), blob: file, type: file.type || 'image/jpeg', size: file.size, createdAt: Date.now() };
+    const record = { id: createId(), name: String(file.name || 'Custom wallpaper').slice(0, 90), blob: file, type: file.type || 'image/jpeg', size: file.size, width: dimensions && dimensions.width || 0, height: dimensions && dimensions.height || 0, createdAt: Date.now() };
     return new Promise((resolve, reject) => {
       const tx = db.transaction('userWallpapers', 'readwrite');
       tx.objectStore('userWallpapers').put(record);
@@ -747,7 +849,7 @@
       tx.onerror = () => reject(tx.error || new Error('Could not delete wallpaper'));
     });
   }
-  async function applyPersonalWallpaper(id) {
+  async function applyPersonalWallpaper(id, quiet) {
     try {
       const record = await getPersonalWallpaper(id);
       if (!record || !record.blob) throw new Error('The saved image could not be found.');
@@ -761,7 +863,7 @@
       settings.wallpaperUrl = '';
       $('wallpaperUrl').value = '';
       saveSettings();
-      toast('Wallpaper applied: ' + record.name);
+      if (!quiet) toast('Wallpaper applied: ' + record.name);
       return true;
     } catch (error) {
       toast(error.message || 'Could not apply personal wallpaper.');
@@ -781,7 +883,7 @@
       if (!records.length) {
         const empty = document.createElement('div');
         empty.className = 'wallpaper-empty';
-        empty.textContent = 'No personal wallpapers yet. Upload your own movie posters or images above.';
+        empty.textContent = 'Your library is empty. Select Add images to import movie posters, film stills or 4K photos.';
         gallery.appendChild(empty);
         $('personalWallpaperStatus').textContent = 'Your images are stored locally on this TV.';
         return;
@@ -800,7 +902,20 @@
         image.alt = record.name;
         const title = document.createElement('span');
         title.textContent = record.name;
-        select.append(image, title);
+        const dimensions = document.createElement('small');
+        const width = Number(record.width) || 0;
+        const height = Number(record.height) || 0;
+        const sizeMb = (Number(record.size) || 0) / (1024 * 1024);
+        dimensions.className = 'wallpaper-image-meta';
+        dimensions.textContent = (width && height ? width + ' × ' + height + ' · ' : '') + sizeMb.toFixed(1) + ' MB';
+        if (settings.personalWallpaperId === record.id) {
+          const active = document.createElement('small');
+          active.className = 'wallpaper-current-badge';
+          active.textContent = 'CURRENT WALLPAPER';
+          select.append(image, title, dimensions, active);
+        } else {
+          select.append(image, title, dimensions);
+        }
         select.addEventListener('click', async () => {
           const applied = await applyPersonalWallpaper(record.id);
           if (applied) {
@@ -829,50 +944,122 @@
         card.append(select, remove);
         gallery.appendChild(card);
       });
-      $('personalWallpaperStatus').textContent = 'Select a thumbnail to apply it. Your images remain on this TV after restarting Home Center.';
+      $('personalWallpaperStatus').textContent = 'Select a thumbnail to apply it. Your images stay in this TV app storage while its app data is retained.';
     } catch (error) {
       $('personalWallpaperStatus').textContent = 'Personal wallpaper storage is unavailable on this firmware.';
       console.warn('Personal wallpaper gallery failed:', error);
     }
   }
+  function getImageInfo(file) {
+    return new Promise((resolve, reject) => {
+      const testUrl = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = () => {
+        const info = { width: image.naturalWidth || 0, height: image.naturalHeight || 0 };
+        URL.revokeObjectURL(testUrl);
+        if (!info.width || !info.height) reject(new Error('The image could not be decoded by this TV.'));
+        else resolve(info);
+      };
+      image.onerror = () => { URL.revokeObjectURL(testUrl); reject(new Error('The TV cannot decode this image format.')); };
+      image.src = testUrl;
+    });
+  }
+  async function clearPersonalWallpaperLibrary() {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('userWallpapers', 'readwrite');
+      tx.objectStore('userWallpapers').clear();
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error || new Error('Could not clear wallpaper library'));
+      tx.onabort = () => reject(tx.error || new Error('Wallpaper library clear was aborted'));
+    });
+  }
+  async function requestPersistentStorage() {
+    try {
+      if (navigator.storage && typeof navigator.storage.persist === 'function') {
+        await navigator.storage.persist();
+      }
+    } catch (_) { /* Persistent storage is optional on older webOS builds. */ }
+  }
   async function handleWallpaperFiles(event) {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
+    const before = await getPersonalWallpapers().catch(() => []);
+    const hadSlideshowLibrary = before.length >= 2;
     const added = [];
-    for (const file of files) {
-      if (!file.type || !file.type.startsWith('image/')) {
-        toast('Skipped unsupported file: ' + file.name);
+    const skipped = [];
+    await requestPersistentStorage();
+    for (let fileIndex = 0; fileIndex < files.length; fileIndex += 1) {
+      const file = files[fileIndex];
+      $('personalWallpaperStatus').textContent = 'Importing image ' + (fileIndex + 1) + ' of ' + files.length + ': ' + file.name;
+      const extension = String(file.name || '').split('.').pop().toLowerCase();
+      const supportedExtension = ['jpg','jpeg','png','webp','gif','bmp','avif'].includes(extension);
+      const imageType = String(file.type || '').toLowerCase().startsWith('image/');
+      if (!imageType && !supportedExtension) {
+        skipped.push(file.name + ': unsupported file type');
         continue;
       }
-      if (file.size > 30 * 1024 * 1024) {
-        toast('Skipped ' + file.name + ': maximum size is 30 MB per image.');
+      if (file.size <= 0 || file.size > 30 * 1024 * 1024) {
+        skipped.push(file.name + ': file must be smaller than 30 MB');
         continue;
       }
       try {
-        const testUrl = URL.createObjectURL(file);
-        const decoded = await new Promise(resolve => {
-          const image = new Image();
-          image.onload = () => resolve(image.naturalWidth > 0 && image.naturalHeight > 0);
-          image.onerror = () => resolve(false);
-          image.src = testUrl;
-        });
-        URL.revokeObjectURL(testUrl);
-        if (!decoded) { toast('Skipped image that the TV cannot decode: ' + file.name); continue; }
-        added.push(await savePersonalWallpaper(file));
+        const dimensions = await getImageInfo(file);
+        const id = await savePersonalWallpaper(file, dimensions);
+        added.push(id);
       } catch (error) {
-        toast('Could not save ' + file.name + '. Check available TV storage.');
-        console.warn('Wallpaper import failed:', error);
+        skipped.push(file.name + ': ' + (error.message || 'storage error'));
+        console.warn('Wallpaper import failed:', file.name, error);
       }
     }
     event.target.value = '';
+    const records = await getPersonalWallpapers().catch(() => []);
+    await renderPersonalWallpaperGallery();
     if (added.length) {
-      await renderPersonalWallpaperGallery();
-      await applyPersonalWallpaper(added[0]);
-      $('personalWallpaperStatus').textContent = added.length + ' image(s) added. Select any thumbnail to change wallpaper.';
-      toast(added.length + ' wallpaper(s) added to your personal library.');
-    } else {
-      await renderPersonalWallpaperGallery();
+      await applyPersonalWallpaper(added[0], true);
+      $('personalWallpaperStatus').textContent = added.length + ' image(s) imported. ' + records.length + ' image(s) in your local library.';
+      if (!hadSlideshowLibrary && records.length >= 2 && settings.wallpaperSlideshowSource !== 'bundled') {
+        settings.wallpaperSlideshowEnabled = true;
+        $('wallpaperSlideshowEnabled').checked = true;
+      }
+      saveSettings();
+      startWallpaperSlideshow();
+      toast(added.length + ' wallpaper(s) added to My Wallpaper Library.' + (settings.wallpaperSlideshowEnabled ? ' Slideshow is enabled.' : ''));
     }
+    if (skipped.length) {
+      $('personalWallpaperStatus').textContent += ' Skipped: ' + skipped.slice(0, 3).join(' · ') + (skipped.length > 3 ? ' · and ' + (skipped.length - 3) + ' more.' : '.');
+      if (!added.length) toast('No images were imported. Check supported formats and available storage.');
+    }
+  }
+  async function refreshPersonalWallpaperLibrary() {
+    await renderPersonalWallpaperGallery();
+    const records = await getPersonalWallpapers().catch(() => []);
+    $('personalWallpaperStatus').textContent = records.length
+      ? records.length + ' image(s) stored locally on this TV.'
+      : 'Your personal wallpaper library is empty. Select Add images to import posters or photos.';
+  }
+  async function clearPersonalWallpaperLibraryWithConfirm() {
+    const records = await getPersonalWallpapers();
+    if (!records.length) { toast('Your wallpaper library is already empty.'); return; }
+    const accepted = window.confirm('Delete all ' + records.length + ' personal wallpapers from this TV? This cannot be undone.');
+    if (!accepted) return;
+    await clearPersonalWallpaperLibrary();
+    personalPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    personalPreviewUrls = [];
+    if (settings.personalWallpaperId) {
+      settings.personalWallpaperId = '';
+      settings.wallpaperUrl = DEFAULT_WALLPAPER;
+      await applyWallpaperUrl(DEFAULT_WALLPAPER);
+    }
+    if (settings.wallpaperSlideshowSource === 'personal') {
+      settings.wallpaperSlideshowEnabled = false;
+      $('wallpaperSlideshowEnabled').checked = false;
+    }
+    saveSettings();
+    await renderPersonalWallpaperGallery();
+    startWallpaperSlideshow();
+    $('personalWallpaperStatus').textContent = 'All personal wallpapers have been removed from this TV.';
+    toast('Personal wallpaper library cleared.');
   }
   async function restorePersonalWallpaper() {
     if (!settings.personalWallpaperId) return false;
@@ -889,6 +1076,8 @@
       try {
         const imported = JSON.parse(String(reader.result));
         settings = Object.assign(clone(DEFAULTS), imported);
+        delete settings.cloudWallpaperFeedUrl;
+        if (settings.wallpaperSlideshowSource === 'cloud') settings.wallpaperSlideshowSource = 'personal';
         if (!Number.isFinite(Number(imported.glassTransparency))) settings.glassTransparency = DEFAULTS.glassTransparency;
         delete settings.dockOpacity;
         if (!Array.isArray(settings.apps)) settings.apps = clone(DEFAULTS.apps);
@@ -899,7 +1088,9 @@
         if (settings.personalWallpaperId) restorePersonalWallpaper();
         else if (settings.wallpaperUrl) applyWallpaperUrl(settings.wallpaperUrl);
         else showStoredWallpaper();
-        renderWallpaperGallery(); renderPersonalWallpaperGallery(); toast('Settings imported.');
+        renderWallpaperGallery(); renderPersonalWallpaperGallery();
+        startWallpaperSlideshow();
+        toast('Settings imported.');
       }
       catch (_) { toast('Invalid JSON file.'); }
     }; reader.readAsText(file); event.target.value = '';
@@ -1326,6 +1517,7 @@
     $('appRow').addEventListener('mousemove', updatePointerFocus, { passive: true });
     ['pointerdown','mousemove','touchstart','keydown'].forEach(name => window.addEventListener(name, () => { if (!$('screensaver').classList.contains('hidden')) closeScreensaver(); else resetIdleTimer(); }, { passive: true }));
     updateClock(); setInterval(updateClock, 1000); scheduleWeather(); resetIdleTimer();
+    requestPersistentStorage();
     (async function restoreWallpaperOnStartup() {
       let restored = false;
       if (settings.personalWallpaperId) restored = await restorePersonalWallpaper();
@@ -1338,6 +1530,7 @@
         if (fallbackApplied) saveSettings();
       }
     })();
+    startWallpaperSlideshow();
     if (tiles()[0]) tiles()[0].focus();
   }
   document.addEventListener('DOMContentLoaded', init);

@@ -86,6 +86,14 @@ jobs:
           test -s app/assets/wallpapers/neo-noir-city.svg
           test -s app/assets/wallpapers/poster-wall.svg
           grep -q 'id="wallpaperImage"' app/index.html
+          grep -q 'id="personalWallpaperGallery"' app/index.html
+          grep -q 'multiple class="wallpaper-file-hidden"' app/index.html
+          grep -q 'wallpaperSlideshowInterval' app/index.html
+          grep -q 'function clearPersonalWallpaperLibraryWithConfirm' app/app.js
+          grep -q 'wallpaperSlideshowEnabled' app/index.html
+          grep -q 'id="refreshPersonalWallpapers"' app/index.html
+          grep -q 'id="clearPersonalWallpapers"' app/index.html
+          ! grep -q 'cloudWallpaperFeedUrl' app/index.html
           mkdir -p dist
           ares-package app -o dist
           IPK_PATH="$(find dist -maxdepth 1 -type f -name '*.ipk' -print -quit)"

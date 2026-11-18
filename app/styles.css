@@ -358,3 +358,41 @@ input[type=file] { font-size:17px; }
   .settings-panel { grid-template-columns:140px minmax(0,1fr); }
   .settings-tab { font-size:14px; min-height:44px; }
 }
+
+
+/* LG Home Center 0.9.0 — wider dock and personal-cloud wallpaper rotation */
+.dock-zone { width:min(73vw,1180px); }
+.dock-glass { padding:clamp(10px,.78vw,15px); }
+.app-row { gap:clamp(9px,1.12vw,21px); }
+.app-tile { min-height:clamp(76px,5.35vw,104px); padding:8px 6px; }
+.app-icon-image { width:clamp(40px,3.2vw,60px); height:clamp(40px,3.2vw,60px); }
+.app-label { font-size:clamp(11px,.74vw,14px); }
+.wallpaperSlideshowStatus,#wallpaperSlideshowStatus { min-height:22px; }
+@media (max-width:1100px) {
+  .dock-zone { width:88vw; }
+  .app-tile { min-height:88px; }
+}
+
+
+/* LG Home Center 0.9.1 — dedicated local wallpaper library */
+.personal-library-panel { gap:18px; }
+.library-title-row { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+.library-title-row h2 { margin-bottom:8px; }
+.library-count { flex:0 0 auto; padding:9px 14px; border:1px solid rgba(255,255,255,.22); border-radius:999px; background:rgba(255,255,255,.08); color:#fff; font-size:16px; font-weight:700; white-space:nowrap; }
+.library-upload-row { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin-top:14px; }
+.wallpaper-upload-button { display:inline-flex; align-items:center; justify-content:center; min-height:50px; padding:12px 20px; font-size:17px; font-weight:700; cursor:pointer; }
+.wallpaper-upload-button:focus,.wallpaper-upload-button:hover { outline:3px solid rgba(255,255,255,.9); outline-offset:3px; background:rgba(255,255,255,.22); }
+.wallpaper-file-hidden { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0,0,0,0) !important; white-space:nowrap !important; border:0 !important; }
+.danger-text { color:rgba(255,165,165,.88) !important; margin-left:auto; font-size:14px; }
+.personal-wallpaper-gallery { grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.personal-wallpaper-card { min-width:0; }
+.personal-wallpaper-select { width:100%; }
+.personal-wallpaper-select img { width:100%; aspect-ratio:16/9; object-fit:cover; }
+.personal-wallpaper-select span { font-size:16px; line-height:1.35; }
+.wallpaper-current-badge { display:inline-block; margin:6px 0 2px; color:#b9e4c7; font-size:11px; font-weight:800; letter-spacing:.09em; }
+.personal-wallpaper-delete { min-height:44px; font-size:15px; }
+.setting-note { font-size:14px; line-height:1.55; color:rgba(255,255,255,.62); }
+@media (max-width:1100px) { .personal-wallpaper-gallery { grid-template-columns:repeat(2,minmax(0,1fr)); } .library-title-row { align-items:center; } }
+@media (max-width:760px) { .library-title-row { flex-direction:column; align-items:flex-start; } .danger-text { margin-left:0; } }
+
+.wallpaper-image-meta { display:block; padding:0 2px 3px; color:rgba(255,255,255,.48); font-size:12px; line-height:1.35; }

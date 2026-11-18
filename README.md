@@ -1,59 +1,56 @@
-# LG Home Center — Full webOS project (v0.8.0)
+# LG Home Center — Complete webOS Project (v0.9.1)
 
-A customizable cinematic launcher for rooted LG webOS TVs. This archive includes the complete app source, GitHub Actions workflow and one-click PowerShell publishing script.
+A customizable launcher for rooted LG webOS TVs. This archive contains the complete source, local wallpaper assets, GitHub Actions workflow, and Windows Git publishing script.
 
-## 0.8.0 changes
+## v0.9.1 — My Wallpaper Library
 
-- Fixed Settings vertical scrolling and directional focus for Magic Remote.
-- BACK while a native select is focused advances to the next setting instead of closing Settings.
-- Personal Wallpapers library: import multiple JPG, PNG, WEBP or GIF images/posters, apply later and remove them. Files remain local in TV IndexedDB.
-- Bundled offline wallpapers: Alpine Lake 4K, Otherworld Desert 4K, Neo-Noir City and Original Poster Wall.
-- Centered clock, date and weather near the top of the home screen.
-- Smaller glass dock and shortcut tiles.
-- Home Chooser integration status and setup instructions.
+- One dedicated local wallpaper library in **Settings → General**.
+- Import multiple image files in one selection using the TV file picker.
+- Accepts JPG/JPEG, PNG, WebP, GIF, BMP and AVIF when the TV browser can decode the format.
+- Each image is validated and stored as a Blob in IndexedDB on the TV.
+- Personal gallery with previews, select/apply, current-wallpaper indicator, and per-image Remove.
+- Refresh Library and Clear All Images controls.
+- Slideshow interval: 1, 5, 10, 15, 30 or 60 minutes.
+- Slideshow source: My library only, My library + bundled wallpapers, or bundled wallpapers only.
+- When the personal-only library first reaches two images, the slideshow is enabled automatically. You can turn it off at any time.
+- Requests persistent browser storage where supported by webOS.
+- Direct image URL remains available as an optional one-off wallpaper source.
 
-## Personal wallpapers
+## Local library notes
 
-Open Settings → General → Upload your wallpapers / movie posters. Select one or several images. They appear in Personal Wallpapers and can be applied or removed later.
+- Files remain in the app's IndexedDB storage on the TV across normal app launches and app updates, as long as the webOS app data is retained.
+- Uninstalling the app, clearing its data, or a firmware storage reset may remove the local images. Settings JSON export does not include the binary image files.
+- USB file selection depends on whether the TV's webOS file picker exposes USB files to this app. If it does not, use another supported local-file source or a browser on the TV that exposes files to web apps.
+- Slideshow runs while Home Center is active. It is not a background system service.
+- No Digi Storage, cloud login, or external feed is required for the local library.
 
-Use images you own or are licensed to use. The included cinematic artworks are original artwork, not copied commercial film posters.
+## Publish the complete project to GitHub
 
-Personal image files are stored locally on the TV in IndexedDB. Export Settings exports preferences only, not image bytes; keep the original images on your PC or USB drive as a backup.
+1. Extract this archive.
+2. Open PowerShell in the extracted `LG-HomeCenter-v0.9.1-Full` folder.
+3. Run:
 
-## Assign the physical HOME button
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\PUBLISH_TO_GITHUB.ps1
+   ```
 
-Follow `docs/HOME_BUTTON_SETUP.md`. Install Home Chooser from Homebrew Channel and open it once before updating Home Center 0.8.0. Then open Home Chooser, select LG Home Center and confirm. To restore LG's interface, select LG Home (stock).
+4. The script syncs `Pete11/LG-HomeCenter`, replaces the working tree while preserving `.git`, commits, and pushes the full project.
+5. Open GitHub → Actions → **Build and publish Homebrew IPK** → **Run workflow**.
+6. Confirm Release `v0.9.1` contains the IPK and Homebrew manifest.
 
-Home Center does not silently change the HOME assignment and does not overwrite LG system files.
+The script uses `Desktop\LG-HomeCenter-git` as its local working copy by default. It reuses that clone, fast-forwards it from `origin/main`, then replaces the tracked project files. It does not force-push or delete Git history.
 
-## Publish to GitHub
+## Build locally
 
-1. Extract the complete archive.
-2. Open PowerShell in the project root.
-3. Run `powershell -ExecutionPolicy Bypass -File .\PUBLISH_TO_GITHUB.ps1`.
-4. The script updates `Pete11/LG-HomeCenter`, replaces old files, preserves Git history and pushes a new commit.
-5. In GitHub Actions, run **Build and publish Homebrew IPK**.
-6. Verify Release `v0.8.0` has an IPK and manifest JSON.
-
-The script reuses `Desktop\LG-HomeCenter-git` if that local working copy already exists. Do not delete it.
-
-## Install / update on TV
-
-- Install and open Home Chooser once before updating to 0.8.0, then update Home Center through Homebrew Channel.
-- Do not uninstall the current version unless Homebrew explicitly requires reinstall; uninstalling may delete local app data.
-- After updating, use Settings → Home Button → Check Home Chooser.
-
-## Local build
-
-Requirements: Windows, Node.js, npm and LG webOS TV CLI 3.2.6.
+Requirements: Windows, Git for Windows, Node.js, npm, and LG webOS TV CLI 3.2.6.
 
 ```powershell
 npm install -g @webos-tools/cli@3.2.6
 powershell -ExecutionPolicy Bypass -File .\build-ipk.ps1
 ```
 
-## Notes
+## Important limitations
 
-- TV standby and scheduled power-off settings remain preferences only until a root power service is verified against the exact firmware.
-- Home Chooser is responsible for the physical HOME key assignment.
-- USB file visibility in the webOS file picker can vary by firmware. A direct image URL is also supported.
+- The TV file picker/USB exposure is firmware-dependent and must be tested on the actual TV.
+- App category `home` and Home Chooser permission do not by themselves guarantee that the physical HOME key will be redirected. HOME interception remains a separate Home Chooser/Hearth/root integration task.
+- Standby and native system screensaver controls remain separate root-level integrations.
