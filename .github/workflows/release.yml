@@ -74,9 +74,15 @@ jobs:
           set -euo pipefail
           node --check app/app.js
           node -e "JSON.parse(require('fs').readFileSync('app/appinfo.json', 'utf8'))"
+          node - <<'NODE'
+          const info = require('./app/appinfo.json');
+          if (!Array.isArray(info.appCategory) || !info.appCategory.includes('home')) throw new Error('appinfo.json must declare appCategory: [\"home\"]');
+          if (!Array.isArray(info.requiredPermissions) || !info.requiredPermissions.includes('org.webosbrew.homechooser.applications')) throw new Error('Home Chooser launcher permission is missing');
+          NODE
           test -s app/webOSTVjs-1.2.13/webOSTV.js
           grep -q 'webOSTVjs-1.2.13/webOSTV.js' app/index.html
           test -s app/assets/wallpapers/alpine-lake-4k.jpg
+          test -s app/assets/wallpapers/otherworld-desert-4k.jpg
           test -s app/assets/wallpapers/neo-noir-city.svg
           test -s app/assets/wallpapers/poster-wall.svg
           grep -q 'id="wallpaperImage"' app/index.html

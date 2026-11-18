@@ -1,71 +1,59 @@
-# LG Home Center — proiect complet webOS (v0.7.0)
+# LG Home Center — proiect complet webOS (v0.8.0)
 
-Launcher personalizabil, cu aspect cinematic, pentru televizoare LG webOS rootate. Aceasta este o arhivă completă pentru înlocuirea repository-ului, nu doar un patch.
+Launcher cinematic personalizabil pentru televizoare LG webOS rootate. Arhiva conține proiectul complet, workflow-ul GitHub Actions și scriptul de publicare.
 
-## Ce conține
+## Noutăți v0.8.0
 
-- Sursa completă a aplicației webOS în `app/`, metadate, pictograme și calea pentru biblioteca oficială webOSTV.js.
-- Dock cu maximum șase shortcut-uri, selector de aplicații instalate, pictograme originale citite din launch points webOS, navigare cu săgețile telecomenzii și lansare prin Application Manager / serviciul Homebrew.
-- Ceas, dată, vreme și prognoză pe 10 zile.
-- Glassmorphism negru/alb, gradient lateral, transparență, blur și reglaje de intensitate pentru elementele UI OLED.
-- Screensaver overlay, setări locale, import/export și Custom CSS.
-- Remediere wallpaper: imaginea este acum un element `<img>` real, poziționat deasupra fundalului de bază și sub overlay/UI. Se elimină problema stratului pseudo-element cu `z-index` negativ.
-- Wallpaper-uri incluse offline: `assets/wallpapers/alpine-lake-4k.jpg` (3840×2160, imagine mărită/optimizată) precum și `assets/wallpapers/neo-noir-city.svg` (vector scalabil) și `assets/wallpapers/poster-wall.svg` (colaj original cu postere fictive). Galeria mai oferă imagini online de natură/cinematice; dacă un server extern nu răspunde, wallpaper-ul curent rămâne activ și apare un mesaj de eroare.
-- Workflow GitHub Actions complet, catalog Homebrew și script local pentru compilarea IPK.
+- Scroll vertical funcțional în Settings pe webOS, cu focus vizibil, derulare automată și navigare cu săgețile Magic Remote. Selector-ele sunt controale TV dedicate, cu text mare și listă proprie pentru telecomandă.
+- BACK închide lista unui selector și mută focusul la următoarea setare; BACK din controalele paginii revine la meniul lateral. Ieșirea se face cu Done sau BACK când focusul este în bara laterală.
+- Galerie Personal Wallpapers: importă mai multe imagini/postere JPG, PNG, WEBP sau GIF, selectează-le ulterior și șterge-le. Fișierele sunt păstrate local în IndexedDB pe televizor.
+- Wallpaper-uri locale incluse: Alpine Lake 4K, Otherworld Desert 4K, Neo-Noir City și Original Poster Wall. Funcționează offline.
+- Ora, data și vremea sunt grupate central în partea superioară a ecranului.
+- Dock Glass și shortcut-uri mai compacte, cu pictograme și etichete reduse.
+- Integrare Home Chooser: `appCategory: ["home"]`, permisiune dedicată și verificare de stare în Settings → Home Button.
 
-## Cerințe
+## Wallpaper-uri și postere personale
 
-- LG webOS rootat cu Homebrew Channel pentru descoperirea aplicațiilor instalate și bridge-ul root Homebrew.
-- Internet pentru vreme, presetările online și actualizările din GitHub/Homebrew. Wallpaper-urile incluse funcționează fără internet.
-- Recomand Git for Windows pentru înlocuirea repository-ului; interfața de upload GitHub poate omite directoarele ascunse `.github`.
+Deschide Settings → General → Upload your wallpapers / movie posters. Selectează unul sau mai multe fișiere. După import apar în Personal Wallpapers; selectează o miniatură pentru a o aplica.
 
-## Înlocuirea completă a repository-ului GitHub
+Poți folosi imagini pe care le ai și ai dreptul să le folosești. Arhiva include artă cinematică originală, nu postere comerciale copiate din filme protejate.
 
-1. Extrage această arhivă într-un folder normal.
-2. Instalează Git for Windows dacă `git --version` nu funcționează.
-3. Deschide PowerShell în folderul extras.
-4. Execută:
+Imaginile personale sunt păstrate pe TV în IndexedDB. Export Settings salvează preferințele, nu și fișierele imagine; păstrează separat copiile originale pe PC/USB.
 
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\PUBLISH_TO_GITHUB.ps1
-   ```
+## Butonul HOME al telecomenzii
 
-5. Autentifică-te în GitHub dacă Git Credential Manager solicită acest lucru. Scriptul clonează `Pete11/LG-HomeCenter`, înlocuiește fișierele repository-ului, copiază inclusiv folderul ascuns `.github/workflows/release.yml`, face commit și push în `main`.
-6. În GitHub deschide Actions → **Build and publish Homebrew IPK** → **Run workflow**.
-7. Workflow-ul construiește IPK-ul și publică un GitHub Release folosind versiunea din `app/appinfo.json` (`0.7.0`).
+Urmează `docs/HOME_BUTTON_SETUP.md`. Pe scurt: instalează Home Chooser și deschide-l o dată înainte de actualizarea Home Center 0.8.0, apoi deschide Home Chooser, selectează LG Home Center și confirmă. Pentru revenire, selectează LG Home (stock).
 
-Scriptul nu rescrie istoricul repository-ului și nu folosește force-push. Commit-urile și release-urile anterioare rămân disponibile.
+Nu se modifică automat setarea HOME și nu se înlocuiesc fișierele de sistem LG.
 
-## Alternativă: upload manual
+## Publicare pe GitHub
 
-Poți încărca fișierele și folderele vizibile prin interfața web GitHub, dar apoi trebuie să creezi manual `.github/workflows/release.yml`, folosind conținutul exact din arhivă. Nu omite folderul ascuns `.github`; fără el GitHub Actions nu găsește workflow-ul.
+1. Extrage arhiva completă.
+2. Deschide PowerShell în folderul principal.
+3. Rulează `powershell -ExecutionPolicy Bypass -File .\PUBLISH_TO_GITHUB.ps1`.
+4. Scriptul sincronizează repository-ul `Pete11/LG-HomeCenter`, înlocuiește fișierele vechi, păstrează istoricul Git și publică un commit nou.
+5. Intră în GitHub → Actions → Build and publish Homebrew IPK → Run workflow.
+6. Verifică Release-ul `v0.8.0` și cele două assets: IPK + manifest JSON.
 
-## Construire IPK pe calculator
+Scriptul folosește folderul local existent `Desktop\LG-HomeCenter-git` dacă există. Nu este necesară ștergerea lui.
 
-Instalează webOS CLI și execută:
+## Instalare / actualizare pe TV
+
+- Înainte să actualizezi la 0.8.0, instalează și deschide Home Chooser o dată, apoi actualizează Home Center prin Homebrew Channel.
+- Nu dezinstala versiunea actuală decât dacă Homebrew solicită explicit reinstalarea; dezinstalarea poate șterge datele locale ale aplicației.
+- După instalare, Settings → Home Button → Check Home Chooser verifică integrarea.
+
+## Construire locală
+
+Cerințe: Windows, Node.js, npm și LG webOS TV CLI 3.2.6.
 
 ```powershell
 npm install -g @webos-tools/cli@3.2.6
-.\build-ipk.ps1
+powershell -ExecutionPolicy Bypass -File .\build-ipk.ps1
 ```
 
-Scriptul descarcă arhiva oficială LG webOSTV.js 1.2.13 dacă biblioteca nu este deja prezentă, validează aplicația și creează IPK în `dist/`.
+## Limitări tehnice
 
-## Cum funcționează wallpaper-urile
-
-- Wallpaper-urile incluse sunt fișiere locale relative la aplicație și nu depind de hosturi externe sau CORS.
-- La selectarea unei imagini online, aplicația verifică mai întâi că aceasta se încarcă. Dacă eșuează, păstrează wallpaper-ul anterior și afișează o eroare.
-- Imaginile personale încărcate din fișier sunt salvate în IndexedDB pe televizor. „Restore default wallpaper” revine la imaginea Alpine Lake inclusă.
-- Galeria folosește și linkuri externe pentru imagini cinematice/postere. Rezoluția și disponibilitatea depind de site-ul-sursă; aceste imagini nu sunt redistribuite în repository.
-
-## Limitări importante
-
-- Acest pachet **nu interceptează și nu remapează butonul fizic HOME**. Integrarea Home Chooser / root trebuie verificată separat pe firmware-ul webOS 25 exact înainte de a schimba comportamentul HOME implicit.
-- Screensaverul propriu rulează momentan ca overlay cât timp Home Center este activ; nu este încă înregistrat drept screensaver nativ al sistemului.
-- Setările de power/standby sunt preferințe salvate; nu trimit încă o comandă reală de standby până la verificarea serviciului root potrivit pe acest firmware.
-- Descoperirea aplicațiilor și citirea pictogramelor originale necesită serviciul root Homebrew. Lansarea aplicațiilor încearcă și API-ul webOS Application Manager.
-- Arhiva a trecut verificări statice de sintaxă, dar nu a fost testată pe televizorul fizic. Păstrează disponibilă calea de revenire la HOME-ul original LG.
-
-## Repository
-
-`https://github.com/Pete11/LG-HomeCenter`
+- Programarea standby și oprirea TV rămân setări demonstrative până când serviciul root de alimentare este verificat pe firmware-ul exact.
+- Home Chooser este componenta care setează destinația butonului HOME; Home Center nu schimbă această alegere în fundal.
+- Unele fișiere USB pot să nu apară în selectorul browserului webOS pe toate versiunile de firmware; poți folosi și selectorul de fișiere local disponibil pe TV sau URL direct către o imagine.

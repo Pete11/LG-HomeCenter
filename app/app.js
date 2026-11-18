@@ -12,21 +12,15 @@
     ],
     textBrightness: 78, iconBrightness: 72, clockBrightness: 72, glassTransparency: 62, dockBlur: 16, glassTint: 'dark', glassGradient: 58,
     pixelShift: false, idleDim: true, screensaverEnabled: true, screensaverDelay: 5, screensaverMode: 'clock',
-    autoStandby: 'off', scheduledPowerOffEnabled: false, scheduledPowerOff: '01:00', customCss: '', wallpaperUrl: ''
+    autoStandby: 'off', scheduledPowerOffEnabled: false, scheduledPowerOff: '01:00', customCss: '', wallpaperUrl: '', personalWallpaperId: ''
   };
   const DEFAULT_WALLPAPER = 'assets/wallpapers/alpine-lake-4k.jpg';
   // Bundled images are always available offline. Online sources are optional and are checked before applying.
   const WALLPAPER_PRESETS = [
-    { id: 'nature-alpine-bundled', title: 'Alpine Lake · Included', category: 'nature', resolution: '3840 × 2160 · bundled', source: 'Included with Home Center', url: 'assets/wallpapers/alpine-lake-4k.jpg', preview: 'assets/wallpapers/alpine-lake-thumb.jpg', bundled: true },
-    { id: 'nature-mountain-peaks', title: 'Mountain Peaks & Lake', category: 'nature', resolution: '3840 × 2160 · 4K', source: 'WallpapersCraft · online', url: 'https://images.wallpaperscraft.com/image/single/mountains_peaks_lake_117046_3840x2160.jpg' },
-    { id: 'nature-forest-waterfall', title: 'Serene Forest Waterfall', category: 'nature', resolution: '3840 × 2160 · 4K', source: 'Wallpaper Abyss · online', url: 'https://images8.alphacoders.com/787/787324.jpg' },
-    { id: 'nature-rainforest-waterfall', title: 'Rainforest Waterfall', category: 'nature', resolution: '2880 × 1620 · QHD+', source: 'WallpapersWide · online', url: 'https://wallpaperswide.com/download/rainforest_waterfall-wallpaper-2880x1620.jpg' },
-    { id: 'cinema-noir-bundled', title: 'Neo-Noir City · Included', category: 'cinema', resolution: '3840 × 2160 · vector', source: 'Included with Home Center', url: 'assets/wallpapers/neo-noir-city.svg', bundled: true },
-    { id: 'cinema-poster-wall-bundled', title: 'Original Poster Wall · Included', category: 'cinema', resolution: '3840 × 2160 · vector', source: 'Included with Home Center', url: 'assets/wallpapers/poster-wall.svg', bundled: true },
-    { id: 'cinema-poster-mosaic', title: 'Movie Poster Mosaic', category: 'cinema', resolution: 'Online image · resolution varies', source: 'Wallpapers.com · online', url: 'https://wallpapers.com/images/hd/collage-of-movie-posters-g2fdqahxlakaa7yq.jpg' },
-    { id: 'cinema-sci-fi-city', title: 'Sci-Fi Night City', category: 'cinema', resolution: '4K UHD · online', source: 'UHD Paper · online', url: 'https://2.bp.blogspot.com/-DT9KBjeJx9M/XR76sWaXbVI/AAAAAAAAELA/Ppuu40yiuVcze05K0kryYugcHO5lGB4hACKgBGAs/w0/sci-fi-night-city-cityscape-uhdpaper.com-4K-141.jpg' },
-    { id: 'cinema-blade-runner', title: 'Blade Runner 2049 · Still', category: 'cinema', resolution: 'Online image · resolution varies', source: 'Wallpapers Den · online', url: 'https://images.wallpapersden.com/image/download/blade-runner-2049-still_amxtZ2aUmZqaraWkpJRobWllrWdma2U.jpg' },
-    { id: 'cinema-interstellar', title: 'Interstellar · Ice Planet', category: 'cinema', resolution: 'Online image · resolution varies', source: 'Alpha Coders · online', url: 'https://images3.alphacoders.com/551/551456.jpg' }
+    { id: 'nature-alpine-bundled', title: 'Alpine Lake', category: 'nature', resolution: '3840 × 2160 · 4K', source: 'Included offline', url: 'assets/wallpapers/alpine-lake-4k.jpg', preview: 'assets/wallpapers/alpine-lake-thumb.jpg', bundled: true },
+    { id: 'cinema-desert-bundled', title: 'Otherworld Desert', category: 'cinema', resolution: '3840 × 2160 · 4K', source: 'Original cinematic artwork · included offline', url: 'assets/wallpapers/otherworld-desert-4k.jpg', preview: 'assets/wallpapers/otherworld-desert-thumb.jpg', bundled: true },
+    { id: 'cinema-noir-bundled', title: 'Neo-Noir City', category: 'cinema', resolution: '3840 × 2160 · scalable vector', source: 'Included offline', url: 'assets/wallpapers/neo-noir-city.svg', bundled: true },
+    { id: 'cinema-poster-wall-bundled', title: 'Original Poster Wall', category: 'cinema', resolution: '3840 × 2160 · scalable vector', source: 'Original artwork · included offline', url: 'assets/wallpapers/poster-wall.svg', bundled: true }
   ];
   let installedApps = [];
   let serviceRequests = [];
@@ -52,6 +46,7 @@
       if (apps.length && /^Shortcut 6$/i.test(String(apps[apps.length - 1].name || '')) && !apps[apps.length - 1].appId && apps[apps.length - 1].kind === 'custom') apps.pop();
       if (!apps.length) apps = clone(DEFAULTS.apps);
       const merged = Object.assign(clone(DEFAULTS), saved, { apps });
+      if (typeof merged.personalWallpaperId !== 'string') merged.personalWallpaperId = '';
       if (!Number.isFinite(Number(saved.glassTransparency))) merged.glassTransparency = DEFAULTS.glassTransparency;
       delete merged.dockOpacity;
       return merged;
@@ -351,6 +346,7 @@
           return;
         }
         settings.wallpaperUrl = item.url;
+        settings.personalWallpaperId = '';
         await deleteWallpaperBlob();
         $('wallpaperUrl').value = item.bundled ? '' : item.url;
         saveSettings();
@@ -360,7 +356,7 @@
       });
       gallery.appendChild(card);
     });
-    $('wallpaperGalleryStatus').textContent = 'Bundled wallpapers work offline. Online presets require an internet connection and a direct image URL.';
+    $('wallpaperGalleryStatus').textContent = 'All included wallpapers work offline. Upload your own movie posters and images below.';
   }
   function renderApps() {
     const row = $('appRow'); row.innerHTML = '';
@@ -445,19 +441,60 @@
     }
     toast('Could not launch ' + (appName || appId) + '. Homebrew root service and webOS launch API are unavailable.');
   }
+  function checkHomeChooser() {
+    const status = $('homeChooserStatus');
+    if (!status) return;
+    status.textContent = 'Checking Home Chooser service…';
+    requestWebOSService('luna://org.webosbrew.homechooser.service', 'getInfo', {}, function (info) {
+      if (!info || info.returnValue === false) {
+        status.textContent = 'Home Chooser is not ready. Install it from Homebrew Channel and open it once, then update Home Center.';
+        return;
+      }
+      if (!info.root) {
+        status.textContent = 'Home Chooser is installed but its root service is not initialized. Open Home Chooser once and complete its setup.';
+      } else if (!info.permitted) {
+        status.textContent = 'Home Chooser is running, but this installed Home Center copy does not have its launcher permission yet. Reinstall/update Home Center after opening Home Chooser.';
+      } else if (info.isSelectedHome) {
+        status.textContent = 'LG Home Center is selected for the remote HOME button.';
+      } else {
+        status.textContent = 'Home Chooser is ready. Open Home Chooser and select LG Home Center to assign the remote HOME button.';
+      }
+    }, function () {
+      status.textContent = 'Home Chooser service not found. Install Home Chooser from Homebrew Channel, open it once, then check again.';
+    });
+  }
+  function openHomeChooser() {
+    const appId = 'org.webosbrew.homechooser';
+    if (window.webOS && webOS.service && typeof webOS.service.request === 'function') {
+      requestWebOSService('luna://com.webos.applicationManager', 'launch', { id: appId, params: {} }, function (response) {
+        if (response.returnValue === false) toast('Could not open Home Chooser: ' + (response.errorText || 'launch rejected'));
+        else toast('Opening Home Chooser…');
+      }, function (error) {
+        toast('Home Chooser could not be opened. Install it from Homebrew Channel first.');
+        console.warn('Home Chooser launch failed:', error);
+      });
+    } else {
+      toast('Home Chooser is only available on the LG TV.');
+    }
+  }
+
   function openSettings(tab) {
     closeScreensaver(); $('settingsOverlay').classList.remove('hidden'); $('settingsOverlay').setAttribute('aria-hidden', 'false');
-    selectTab(tab || 'general'); renderAppEditor(); hydrateSettingsForm(); renderWallpaperGallery();
+    selectTab(tab || 'general'); renderAppEditor(); hydrateSettingsForm(); renderWallpaperGallery(); renderPersonalWallpaperGallery();
     const first = document.querySelector('.settings-tab.active'); if (first) first.focus();
+    if ((tab || 'general') === 'home') checkHomeChooser();
   }
   function closeSettings() {
+    closeAnyTvSelect();
     $('settingsOverlay').classList.add('hidden'); $('settingsOverlay').setAttribute('aria-hidden', 'true');
     if (tiles()[currentFocus]) tiles()[currentFocus].focus(); resetIdleTimer();
   }
   function selectTab(name) {
+    closeAnyTvSelect();
     document.querySelectorAll('.settings-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.tab === name));
     document.querySelectorAll('.settings-page').forEach(page => page.classList.toggle('active', page.dataset.page === name));
     const title = document.querySelector('.settings-tab.active'); $('settingsTitle').textContent = title ? title.textContent : 'General';
+    if ($('settingsContent')) $('settingsContent').scrollTop = 0;
   }
   function renderAppIconPreview(container, app) {
     container.innerHTML = '';
@@ -472,6 +509,7 @@
     }
   }
   function renderAppEditor() {
+    closeAnyTvSelect();
     const editor = $('appEditor'); editor.innerHTML = '';
     settings.apps.forEach((app, index) => {
       const row = document.createElement('div'); row.className = 'app-edit-row';
@@ -535,6 +573,7 @@
         saveSettings(); renderAppEditor(); renderApps(); updateShortcutCount(); toast('Shortcut removed.');
       });
       header.append(label, remove); pickerLine.append(preview, picker); fields.append(name, id); row.append(header, pickerLine, fields); editor.appendChild(row);
+      enhanceTvSelect(picker);
     });
     updateShortcutCount();
   }
@@ -561,12 +600,15 @@
     $('screensaverDelay').value = String(settings.screensaverDelay); $('screensaverMode').value = settings.screensaverMode;
     $('autoStandby').value = settings.autoStandby; $('scheduledPowerOff').value = settings.scheduledPowerOff;
     $('customCss').value = settings.customCss || '';
+    document.querySelectorAll('select').forEach(syncTvSelect);
   }
   function bindSettings() {
-    document.querySelectorAll('.settings-tab').forEach(tab => tab.addEventListener('click', () => selectTab(tab.dataset.tab)));
+    document.querySelectorAll('.settings-tab').forEach(tab => tab.addEventListener('click', () => { selectTab(tab.dataset.tab); if (tab.dataset.tab === 'home') checkHomeChooser(); }));
     $('settingsButton').addEventListener('click', () => openSettings('general'));
     $('addShortcut').addEventListener('click', addShortcut);
     $('loadInstalledApps').addEventListener('click', loadInstalledApps);
+    $('checkHomeChooser').addEventListener('click', checkHomeChooser);
+    $('openHomeChooser').addEventListener('click', openHomeChooser);
     $('wallpaperCategory').addEventListener('change', renderWallpaperGallery);
     $('closeSettings').addEventListener('click', closeSettings); $('doneSettings').addEventListener('click', closeSettings);
     $('weatherCityInput').addEventListener('change', () => { settings.city = $('weatherCityInput').value.trim() || 'Bucharest'; saveSettings(); scheduleWeather(); });
@@ -586,15 +628,18 @@
       $('applyWallpaperUrl').disabled = false;
       if (!applied) { toast('Image could not be loaded. Use a direct .jpg, .png or .webp image URL.'); return; }
       settings.wallpaperUrl = url;
+      settings.personalWallpaperId = '';
       await deleteWallpaperBlob();
       saveSettings();
       toast('Wallpaper updated.');
     });
-    $('wallpaperFile').addEventListener('change', handleWallpaperFile);
+    $('wallpaperFile').addEventListener('change', handleWallpaperFiles);
     $('clearWallpaper').addEventListener('click', async () => {
       await deleteWallpaperBlob();
       settings.wallpaperUrl = DEFAULT_WALLPAPER;
+      settings.personalWallpaperId = '';
       $('wallpaperUrl').value = '';
+      renderPersonalWallpaperGallery();
       const applied = await applyWallpaperUrl(DEFAULT_WALLPAPER);
       saveSettings();
       toast(applied ? 'Default bundled wallpaper restored.' : 'Could not load the bundled wallpaper.');
@@ -644,8 +689,12 @@
     if (dbPromise) return dbPromise;
     dbPromise = new Promise((resolve, reject) => {
       if (!window.indexedDB) return reject(new Error('IndexedDB unavailable'));
-      const request = indexedDB.open('HomeCenterDB', 1);
-      request.onupgradeneeded = () => { if (!request.result.objectStoreNames.contains('wallpaper')) request.result.createObjectStore('wallpaper'); };
+      const request = indexedDB.open('HomeCenterDB', 2);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains('wallpaper')) db.createObjectStore('wallpaper');
+        if (!db.objectStoreNames.contains('userWallpapers')) db.createObjectStore('userWallpapers', { keyPath: 'id' });
+      };
       request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
     });
     return dbPromise;
@@ -659,44 +708,177 @@
   async function deleteWallpaperBlob() {
     try { const db = await openDb(); return new Promise(resolve => { const tx = db.transaction('wallpaper', 'readwrite'); tx.objectStore('wallpaper').delete('current'); tx.oncomplete = resolve; tx.onerror = resolve; }); } catch (_) { /* no-op */ }
   }
-  async function handleWallpaperFile(event) {
-    const file = event.target.files && event.target.files[0];
-    if (!file) return;
-    if (!file.type || !file.type.startsWith('image/')) { toast('Select an image file.'); event.target.value = ''; return; }
-    if (file.size > 24 * 1024 * 1024) { toast('Choose an image no larger than 24 MB.'); event.target.value = ''; return; }
-    const temporaryUrl = URL.createObjectURL(file);
-    const loaded = await applyWallpaperUrl(temporaryUrl);
-    if (!loaded) {
-      if (wallpaperObjectUrl !== temporaryUrl) URL.revokeObjectURL(temporaryUrl);
-      toast('The selected image could not be decoded by this TV.');
-      event.target.value = '';
-      return;
-    }
+  function createId() {
+    return 'wallpaper-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
+  }
+  async function savePersonalWallpaper(file) {
+    const db = await openDb();
+    const record = { id: createId(), name: String(file.name || 'Custom wallpaper').slice(0, 90), blob: file, type: file.type || 'image/jpeg', size: file.size, createdAt: Date.now() };
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('userWallpapers', 'readwrite');
+      tx.objectStore('userWallpapers').put(record);
+      tx.oncomplete = () => resolve(record.id);
+      tx.onerror = () => reject(tx.error || new Error('Could not store image'));
+      tx.onabort = () => reject(tx.error || new Error('Image storage was aborted'));
+    });
+  }
+  async function getPersonalWallpapers() {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const request = db.transaction('userWallpapers', 'readonly').objectStore('userWallpapers').getAll();
+      request.onsuccess = () => resolve((request.result || []).sort((a, b) => b.createdAt - a.createdAt));
+      request.onerror = () => reject(request.error || new Error('Could not read personal wallpapers'));
+    });
+  }
+  async function getPersonalWallpaper(id) {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const request = db.transaction('userWallpapers', 'readonly').objectStore('userWallpapers').get(id);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error || new Error('Could not read wallpaper'));
+    });
+  }
+  async function deletePersonalWallpaper(id) {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('userWallpapers', 'readwrite');
+      tx.objectStore('userWallpapers').delete(id);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error || new Error('Could not delete wallpaper'));
+    });
+  }
+  async function applyPersonalWallpaper(id) {
     try {
-      await saveWallpaperBlob(file);
+      const record = await getPersonalWallpaper(id);
+      if (!record || !record.blob) throw new Error('The saved image could not be found.');
+      const objectUrl = URL.createObjectURL(record.blob);
+      const applied = await applyWallpaperUrl(objectUrl);
+      if (!applied) {
+        if (wallpaperObjectUrl !== objectUrl) URL.revokeObjectURL(objectUrl);
+        throw new Error('The TV could not decode this image.');
+      }
+      settings.personalWallpaperId = id;
       settings.wallpaperUrl = '';
       $('wallpaperUrl').value = '';
       saveSettings();
-      toast('Wallpaper saved on this TV.');
+      toast('Wallpaper applied: ' + record.name);
+      return true;
     } catch (error) {
-      toast('Wallpaper is displayed, but local storage failed. Check available app storage.');
-      console.warn('Wallpaper storage failed:', error);
-    }
-    event.target.value = '';
-  }
-  async function showStoredWallpaper() {
-    try {
-      const blob = await getWallpaperBlob();
-      if (!blob) return false;
-      const objectUrl = URL.createObjectURL(blob);
-      const applied = await applyWallpaperUrl(objectUrl);
-      if (!applied && wallpaperObjectUrl !== objectUrl) URL.revokeObjectURL(objectUrl);
-      return applied;
-    } catch (error) {
-      console.warn('Could not restore stored wallpaper:', error);
+      toast(error.message || 'Could not apply personal wallpaper.');
       return false;
     }
   }
+  let personalPreviewUrls = [];
+  async function renderPersonalWallpaperGallery() {
+    const gallery = $('personalWallpaperGallery');
+    if (!gallery) return;
+    personalPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    personalPreviewUrls = [];
+    gallery.innerHTML = '';
+    try {
+      const records = await getPersonalWallpapers();
+      $('personalWallpaperCount').textContent = records.length + (records.length === 1 ? ' image' : ' images');
+      if (!records.length) {
+        const empty = document.createElement('div');
+        empty.className = 'wallpaper-empty';
+        empty.textContent = 'No personal wallpapers yet. Upload your own movie posters or images above.';
+        gallery.appendChild(empty);
+        $('personalWallpaperStatus').textContent = 'Your images are stored locally on this TV.';
+        return;
+      }
+      records.forEach(record => {
+        const card = document.createElement('div');
+        card.className = 'personal-wallpaper-card' + (settings.personalWallpaperId === record.id ? ' selected' : '');
+        const select = document.createElement('button');
+        select.type = 'button';
+        select.className = 'personal-wallpaper-select';
+        select.setAttribute('aria-label', 'Apply wallpaper ' + record.name);
+        const image = document.createElement('img');
+        const objectUrl = URL.createObjectURL(record.blob);
+        personalPreviewUrls.push(objectUrl);
+        image.src = objectUrl;
+        image.alt = record.name;
+        const title = document.createElement('span');
+        title.textContent = record.name;
+        select.append(image, title);
+        select.addEventListener('click', async () => {
+          const applied = await applyPersonalWallpaper(record.id);
+          if (applied) {
+            gallery.querySelectorAll('.personal-wallpaper-card').forEach(item => item.classList.toggle('selected', item === card));
+            $('personalWallpaperStatus').textContent = record.name + ' is now your wallpaper.';
+          }
+        });
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'small-action personal-wallpaper-delete';
+        remove.textContent = 'Remove';
+        remove.setAttribute('aria-label', 'Remove ' + record.name);
+        remove.addEventListener('click', async () => {
+          try {
+            await deletePersonalWallpaper(record.id);
+            if (settings.personalWallpaperId === record.id) {
+              settings.personalWallpaperId = '';
+              settings.wallpaperUrl = DEFAULT_WALLPAPER;
+              await applyWallpaperUrl(DEFAULT_WALLPAPER);
+              saveSettings();
+            }
+            renderPersonalWallpaperGallery();
+            toast('Personal wallpaper removed.');
+          } catch (error) { toast('Could not remove wallpaper: ' + (error.message || 'storage error')); }
+        });
+        card.append(select, remove);
+        gallery.appendChild(card);
+      });
+      $('personalWallpaperStatus').textContent = 'Select a thumbnail to apply it. Your images remain on this TV after restarting Home Center.';
+    } catch (error) {
+      $('personalWallpaperStatus').textContent = 'Personal wallpaper storage is unavailable on this firmware.';
+      console.warn('Personal wallpaper gallery failed:', error);
+    }
+  }
+  async function handleWallpaperFiles(event) {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    const added = [];
+    for (const file of files) {
+      if (!file.type || !file.type.startsWith('image/')) {
+        toast('Skipped unsupported file: ' + file.name);
+        continue;
+      }
+      if (file.size > 30 * 1024 * 1024) {
+        toast('Skipped ' + file.name + ': maximum size is 30 MB per image.');
+        continue;
+      }
+      try {
+        const testUrl = URL.createObjectURL(file);
+        const decoded = await new Promise(resolve => {
+          const image = new Image();
+          image.onload = () => resolve(image.naturalWidth > 0 && image.naturalHeight > 0);
+          image.onerror = () => resolve(false);
+          image.src = testUrl;
+        });
+        URL.revokeObjectURL(testUrl);
+        if (!decoded) { toast('Skipped image that the TV cannot decode: ' + file.name); continue; }
+        added.push(await savePersonalWallpaper(file));
+      } catch (error) {
+        toast('Could not save ' + file.name + '. Check available TV storage.');
+        console.warn('Wallpaper import failed:', error);
+      }
+    }
+    event.target.value = '';
+    if (added.length) {
+      await renderPersonalWallpaperGallery();
+      await applyPersonalWallpaper(added[0]);
+      $('personalWallpaperStatus').textContent = added.length + ' image(s) added. Select any thumbnail to change wallpaper.';
+      toast(added.length + ' wallpaper(s) added to your personal library.');
+    } else {
+      await renderPersonalWallpaperGallery();
+    }
+  }
+  async function restorePersonalWallpaper() {
+    if (!settings.personalWallpaperId) return false;
+    return applyPersonalWallpaper(settings.personalWallpaperId);
+  }
+
   function exportSettings() {
     const data = JSON.stringify(settings, null, 2); const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'homecenter-settings.json'; anchor.click(); URL.revokeObjectURL(url); toast('Settings exported.');
@@ -714,8 +896,10 @@
         if (settings.apps.length && /^Shortcut 6$/i.test(String(settings.apps[settings.apps.length - 1].name || '')) && !settings.apps[settings.apps.length - 1].appId && settings.apps[settings.apps.length - 1].kind === 'custom') settings.apps.pop();
         if (!settings.apps.length) settings.apps = clone(DEFAULTS.apps);
         saveSettings(); applyVisualSettings(); renderApps(); renderAppEditor(); hydrateSettingsForm(); scheduleWeather();
-        if (settings.wallpaperUrl) applyWallpaperUrl(settings.wallpaperUrl); else showStoredWallpaper();
-        renderWallpaperGallery(); toast('Settings imported.');
+        if (settings.personalWallpaperId) restorePersonalWallpaper();
+        else if (settings.wallpaperUrl) applyWallpaperUrl(settings.wallpaperUrl);
+        else showStoredWallpaper();
+        renderWallpaperGallery(); renderPersonalWallpaperGallery(); toast('Settings imported.');
       }
       catch (_) { toast('Invalid JSON file.'); }
     }; reader.readAsText(file); event.target.value = '';
@@ -736,28 +920,184 @@
     const delay = Math.max(1, Number(settings.screensaverDelay) || 5) * 60000;
     idleTimer = setTimeout(showScreensaver, delay);
   }
-  function directionalKey(event) {
-    const keyNames = [event.key, event.keyIdentifier].filter(Boolean).map(value => String(value).toLowerCase());
-    const code = Number(event.keyCode || event.which || 0);
-    if (keyNames.some(key => ['arrowleft','left','leftarrow'].includes(key)) || code === 37) return 'left';
-    if (keyNames.some(key => ['arrowright','right','rightarrow'].includes(key)) || code === 39) return 'right';
-    if (keyNames.some(key => ['arrowup','up','uparrow'].includes(key)) || code === 38) return 'up';
-    if (keyNames.some(key => ['arrowdown','down','downarrow'].includes(key)) || code === 40) return 'down';
-    return '';
+  const tvSelectRegistry = new WeakMap();
+  let openTvSelectElement = null;
+  let tvSelectSequence = 0;
+
+  function syncTvSelect(select) {
+    const record = tvSelectRegistry.get(select);
+    if (!record) return;
+    const option = select.options[select.selectedIndex];
+    record.trigger.textContent = option ? option.textContent : 'Select…';
+    record.trigger.title = option ? option.textContent : '';
+    record.menu.querySelectorAll('.tv-select-option').forEach((button, index) => {
+      const selected = index === select.selectedIndex;
+      button.classList.toggle('selected', selected);
+      button.setAttribute('aria-selected', selected ? 'true' : 'false');
+    });
   }
+
+  function closeTvSelect(select, restoreFocus) {
+    const target = select || openTvSelectElement;
+    if (!target) return;
+    const record = tvSelectRegistry.get(target);
+    if (!record) return;
+    record.menu.classList.add('hidden');
+    record.trigger.setAttribute('aria-expanded', 'false');
+    if (openTvSelectElement === target) openTvSelectElement = null;
+    if (restoreFocus) focusAndReveal(record.trigger);
+  }
+
+  function closeAnyTvSelect() {
+    if (openTvSelectElement) closeTvSelect(openTvSelectElement, false);
+  }
+
+  function chooseTvSelectOption(select, index) {
+    const record = tvSelectRegistry.get(select);
+    if (!record || !select.options[index] || select.options[index].disabled) return;
+    select.selectedIndex = index;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    syncTvSelect(select);
+    closeTvSelect(select, true);
+  }
+
+  function openTvSelect(select) {
+    const record = tvSelectRegistry.get(select);
+    if (!record) return;
+    if (openTvSelectElement && openTvSelectElement !== select) closeAnyTvSelect();
+    record.menu.classList.remove('hidden');
+    record.trigger.setAttribute('aria-expanded', 'true');
+    openTvSelectElement = select;
+
+    const rect = record.trigger.getBoundingClientRect();
+    const maxHeight = Math.min(470, Math.floor(window.innerHeight * 0.44));
+    const below = Math.max(0, window.innerHeight - rect.bottom - 18);
+    const placeAbove = below < Math.min(190, maxHeight) && rect.top > below;
+    const height = Math.min(maxHeight, placeAbove ? Math.max(160, rect.top - 18) : Math.max(160, below));
+    const top = placeAbove ? Math.max(10, rect.top - height - 6) : Math.min(window.innerHeight - height - 10, rect.bottom + 6);
+    record.menu.style.position = 'fixed';
+    record.menu.style.left = Math.max(10, Math.min(rect.left, window.innerWidth - rect.width - 10)) + 'px';
+    record.menu.style.top = top + 'px';
+    record.menu.style.width = Math.min(rect.width, window.innerWidth - 20) + 'px';
+    record.menu.style.maxHeight = height + 'px';
+
+    const options = Array.from(record.menu.querySelectorAll('.tv-select-option'));
+    const selected = options[select.selectedIndex] || options.find(option => !option.disabled);
+    if (selected) focusAndReveal(selected);
+  }
+
+  function refreshTvSelectOptions(select) {
+    const record = tvSelectRegistry.get(select);
+    if (!record) return;
+    record.menu.innerHTML = '';
+    Array.from(select.options).forEach((option, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'tv-select-option';
+      button.textContent = option.textContent;
+      button.disabled = !!option.disabled;
+      button.dataset.optionIndex = String(index);
+      button.setAttribute('role', 'option');
+      button.setAttribute('aria-selected', index === select.selectedIndex ? 'true' : 'false');
+      button.addEventListener('click', () => chooseTvSelectOption(select, index));
+      record.menu.appendChild(button);
+    });
+    syncTvSelect(select);
+  }
+
+  function enhanceTvSelect(select) {
+    if (!select || tvSelectRegistry.has(select) || !select.parentNode) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'tv-select-wrap';
+    wrapper.dataset.selectId = String(++tvSelectSequence);
+    select.parentNode.insertBefore(wrapper, select);
+    wrapper.appendChild(select);
+    select.classList.add('tv-native-select');
+    select.tabIndex = -1;
+    select.setAttribute('aria-hidden', 'true');
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'tv-select-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.setAttribute('aria-label', select.getAttribute('aria-label') || select.id || 'Choose an option');
+
+    const menu = document.createElement('div');
+    menu.className = 'tv-select-menu hidden';
+    menu.id = 'tv-select-menu-' + tvSelectSequence;
+    menu.setAttribute('role', 'listbox');
+    trigger.setAttribute('aria-controls', menu.id);
+
+    wrapper.append(trigger, menu);
+    tvSelectRegistry.set(select, { wrapper, trigger, menu });
+    trigger.addEventListener('click', () => {
+      if (openTvSelectElement === select) closeTvSelect(select, false);
+      else openTvSelect(select);
+    });
+    select.addEventListener('change', () => syncTvSelect(select));
+    refreshTvSelectOptions(select);
+  }
+
+  function enhanceAllTvSelects(scope) {
+    (scope || document).querySelectorAll('select').forEach(enhanceTvSelect);
+  }
+
+  function moveFocusFromTvSelectMenu(direction, page) {
+    const select = openTvSelectElement;
+    if (!select) return false;
+    const record = tvSelectRegistry.get(select);
+    const moved = focusSequential(direction, page);
+    const active = document.activeElement;
+    if (!record || !record.menu.contains(active)) closeTvSelect(select, false);
+    return moved;
+  }
+
   function visibleFocusable(scope) {
-    const selector = 'button:not(:disabled), select:not(:disabled), input:not(:disabled):not([type="hidden"]), textarea:not(:disabled), [tabindex="0"]';
+    const selector = 'button:not(:disabled), select:not(:disabled):not(.tv-native-select), input:not(:disabled):not([type="hidden"]), textarea:not(:disabled), .file-button[tabindex="0"], [tabindex="0"]';
     return Array.from(scope.querySelectorAll(selector)).filter(element => {
       if (element.closest('.hidden')) return false;
       const rect = element.getBoundingClientRect();
       return rect.width > 0 && rect.height > 0 && getComputedStyle(element).visibility !== 'hidden';
     });
   }
+  function focusAndReveal(element) {
+    if (!element) return false;
+    try { element.focus({ preventScroll: true }); } catch (_) { element.focus(); }
+    const content = $('settingsContent');
+    const selectMenu = element.closest ? element.closest('.tv-select-menu:not(.hidden)') : null;
+    if (selectMenu) {
+      const er = element.getBoundingClientRect();
+      const mr = selectMenu.getBoundingClientRect();
+      const margin = 12;
+      if (er.top < mr.top + margin) selectMenu.scrollTop -= (mr.top + margin - er.top);
+      else if (er.bottom > mr.bottom - margin) selectMenu.scrollTop += (er.bottom - (mr.bottom - margin));
+    } else if (content && content.contains(element)) {
+      const er = element.getBoundingClientRect();
+      const cr = content.getBoundingClientRect();
+      const margin = 32;
+      if (er.top < cr.top + margin) content.scrollTop = Math.max(0, content.scrollTop - (cr.top + margin - er.top));
+      else if (er.bottom > cr.bottom - margin) content.scrollTop += (er.bottom - (cr.bottom - margin));
+    } else if (element.scrollIntoView) {
+      try { element.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (_) { /* older webOS */ }
+    }
+    return true;
+  }
+  function focusSequential(direction, scope) {
+    const candidates = visibleFocusable(scope);
+    if (!candidates.length) return false;
+    const active = document.activeElement;
+    let index = candidates.indexOf(active);
+    if (index < 0) index = direction === 'up' ? candidates.length : -1;
+    const nextIndex = index + (direction === 'down' ? 1 : -1);
+    if (nextIndex < 0 || nextIndex >= candidates.length) return false;
+    return focusAndReveal(candidates[nextIndex]);
+  }
   function moveFocusSpatial(direction, scope) {
     const candidates = visibleFocusable(scope);
     if (!candidates.length) return false;
     const active = document.activeElement;
-    if (!active || !candidates.includes(active)) { candidates[0].focus(); return true; }
+    if (!active || !candidates.includes(active)) return focusAndReveal(candidates[0]);
     const a = active.getBoundingClientRect();
     const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
     let best = null, bestScore = Infinity;
@@ -772,26 +1112,64 @@
       const score = primary + secondary * 1.7 + (secondary > primary * 1.6 ? primary * 2 : 0);
       if (score < bestScore) { bestScore = score; best = candidate; }
     });
-    if (!best) {
-      // Wrap within a row/column when there is no element in the requested direction.
-      const others = candidates.filter(candidate => candidate !== active);
-      others.sort((left, right) => {
-        const l = left.getBoundingClientRect(), r = right.getBoundingClientRect();
-        const lc = direction === 'left' ? -l.right : direction === 'right' ? l.left : direction === 'up' ? -l.bottom : l.top;
-        const rc = direction === 'left' ? -r.right : direction === 'right' ? r.left : direction === 'up' ? -r.bottom : r.top;
-        return lc - rc;
-      });
-      best = others[0] || null;
-    }
     if (!best) return false;
-    best.focus({ preventScroll: true });
-    if (best.scrollIntoView) best.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    return true;
+    return focusAndReveal(best);
   }
   function isEditableTarget(target) {
     if (!target) return false;
     const tag = String(target.tagName || '').toLowerCase();
     return tag === 'textarea' || (tag === 'input' && !['checkbox','radio','range','button','file','submit'].includes(String(target.type || '').toLowerCase()));
+  }
+  function handleSettingsBack(active) {
+    const page = document.querySelector('.settings-page.active');
+    const sidebar = $('settingsOverlay').querySelector('.settings-sidebar');
+
+    // BACK while a custom TV dropdown is open closes it and advances to the next setting.
+    if (openTvSelectElement) {
+      const select = openTvSelectElement;
+      const record = tvSelectRegistry.get(select);
+      closeTvSelect(select, false);
+      if (record) focusAndReveal(record.trigger);
+      if (!page || !focusSequential('down', page)) focusAndReveal($('doneSettings'));
+      return true;
+    }
+
+    if (active && page && page.contains(active)) {
+      if (active.classList && active.classList.contains('tv-select-trigger')) {
+        if (!focusSequential('down', page)) focusAndReveal($('doneSettings'));
+        return true;
+      }
+      if (isEditableTarget(active) || active.tagName === 'TEXTAREA') {
+        if (typeof active.blur === 'function') active.blur();
+        const selectedTab = document.querySelector('.settings-tab.active');
+        if (selectedTab) focusAndReveal(selectedTab);
+        else focusAndReveal($('doneSettings'));
+        return true;
+      }
+      const selectedTab = document.querySelector('.settings-tab.active');
+      if (selectedTab) { focusAndReveal(selectedTab); return true; }
+      focusAndReveal($('doneSettings'));
+      return true;
+    }
+    if (active && sidebar && sidebar.contains(active)) {
+      closeSettings();
+      return true;
+    }
+    if (active && (active.id === 'doneSettings' || active.id === 'closeSettings')) {
+      closeSettings();
+      return true;
+    }
+    closeSettings();
+    return true;
+  }
+  function directionalKey(event) {
+    const keyNames = [event.key, event.keyIdentifier].filter(Boolean).map(value => String(value).toLowerCase());
+    const code = Number(event.keyCode || event.which || 0);
+    if (keyNames.some(key => ['arrowleft','left','leftarrow'].includes(key)) || code === 37) return 'left';
+    if (keyNames.some(key => ['arrowright','right','rightarrow'].includes(key)) || code === 39) return 'right';
+    if (keyNames.some(key => ['arrowup','up','uparrow'].includes(key)) || code === 38) return 'up';
+    if (keyNames.some(key => ['arrowdown','down','downarrow'].includes(key)) || code === 40) return 'down';
+    return '';
   }
   function handleKeyDown(event) {
     const inSettings = !$('settingsOverlay').classList.contains('hidden');
@@ -801,72 +1179,144 @@
     const key = String(event.key || event.keyIdentifier || '').toLowerCase();
     const direction = directionalKey(event);
     const isConfirm = key === 'enter' || key === 'accept' || keyCode === 13 || keyCode === 23 || keyCode === 66;
-    const isBack = key === 'escape' || keyCode === 461 || keyCode === 27;
+    const isBack = ['escape','back','browserback','goback','backspace','u+0008'].includes(key) || keyCode === 461 || keyCode === 27 || keyCode === 8 || keyCode === 10009;
+    const active = document.activeElement;
 
     if (saverVisible) { event.preventDefault(); closeScreensaver(); return; }
     if (isBack) {
-      if (forecastVisible) { event.preventDefault(); closeForecast(); }
-      else if (inSettings) { event.preventDefault(); closeSettings(); }
-      else { event.preventDefault(); openSettings('general'); }
+      if (forecastVisible) { event.preventDefault(); closeForecast(); return; }
+      if (inSettings) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+        handleSettingsBack(active);
+        return;
+      }
+      // Do not repurpose BACK as Settings or app-exit. HOME is handled by Home Chooser.
+      event.preventDefault();
       return;
     }
     if (forecastVisible) {
-      if (direction) { event.preventDefault(); moveFocusSpatial(direction, $('forecastOverlay')); }
-      else if (isConfirm && document.activeElement && document.activeElement.tagName === 'BUTTON') { event.preventDefault(); document.activeElement.click(); }
+      if (direction) {
+        event.preventDefault();
+        const scope = $('forecastOverlay');
+        if (direction === 'up' || direction === 'down') focusSequential(direction, scope);
+        else moveFocusSpatial(direction, scope);
+      } else if (isConfirm && active && active.tagName === 'BUTTON') {
+        event.preventDefault(); active.click();
+      }
       return;
     }
     if (inSettings) {
-      const target = event.target || document.activeElement;
-      const tag = String(target && target.tagName || '').toLowerCase();
-      const type = String(target && target.type || '').toLowerCase();
-      // Let native selects and range controls consume their own adjustment arrows.
-      if (direction && !(tag === 'select' && (direction === 'up' || direction === 'down')) && !(type === 'range' && (direction === 'left' || direction === 'right')) && !(isEditableTarget(target) && (direction === 'left' || direction === 'right'))) {
-        event.preventDefault();
-        moveFocusSpatial(direction, $('settingsOverlay'));
-        return;
+      const sidebar = $('settingsOverlay').querySelector('.settings-sidebar');
+      const page = document.querySelector('.settings-page.active');
+      if (direction) {
+        if (sidebar.contains(active)) {
+          if (direction === 'up' || direction === 'down') {
+            event.preventDefault(); focusSequential(direction, sidebar); return;
+          }
+          if (direction === 'right') {
+            event.preventDefault();
+            const candidates = visibleFocusable(page);
+            if (candidates.length) focusAndReveal(candidates[0]);
+            return;
+          }
+        }
+        if (page && page.contains(active)) {
+          const tag = String(active.tagName || '').toLowerCase();
+          const type = String(active.type || '').toLowerCase();
+          if (active.classList && active.classList.contains('tv-select-option') && (direction === 'up' || direction === 'down')) {
+            event.preventDefault();
+            moveFocusFromTvSelectMenu(direction, page);
+            return;
+          }
+          if (active.classList && active.classList.contains('tv-select-trigger') && (direction === 'up' || direction === 'down')) {
+            event.preventDefault();
+            if (!focusSequential(direction, page)) {
+              if (direction === 'down') focusAndReveal($('doneSettings'));
+              else focusAndReveal(document.querySelector('.settings-tab.active'));
+            }
+            return;
+          }
+          // Range sliders and text inputs keep native left/right adjustment and caret behavior.
+          if ((type === 'range' || isEditableTarget(active)) && (direction === 'left' || direction === 'right')) return;
+          event.preventDefault();
+          if (direction === 'up' || direction === 'down') {
+            if (!focusSequential(direction, page)) {
+              if (direction === 'down') focusAndReveal($('doneSettings'));
+              else focusAndReveal(document.querySelector('.settings-tab.active'));
+            }
+          } else if (direction === 'left') {
+            const selectedTab = document.querySelector('.settings-tab.active');
+            if (selectedTab) focusAndReveal(selectedTab);
+          } else {
+            moveFocusSpatial(direction, page);
+          }
+          return;
+        }
+        if (active && active.id === 'settingsContent') {
+          event.preventDefault();
+          const candidates = visibleFocusable(page);
+          if (candidates.length) focusAndReveal(direction === 'up' ? candidates[candidates.length - 1] : candidates[0]);
+          return;
+        }
       }
-      if (isConfirm && target && (target.tagName === 'BUTTON' || target.classList.contains('file-button'))) {
-        event.preventDefault(); target.click(); return;
+      if (isConfirm && active) {
+        if (active.classList && (active.classList.contains('settings-tab') || active.classList.contains('file-button'))) {
+          event.preventDefault(); active.click(); return;
+        }
+        if (active.tagName === 'BUTTON') { event.preventDefault(); active.click(); return; }
+        // Let SELECT, INPUT and TEXTAREA keep their native OK/edit behavior.
       }
       return;
     }
 
     if (direction) {
-      const active = document.activeElement;
       const tileIndex = active && active.classList && active.classList.contains('app-tile') ? Number(active.dataset.index) : -1;
       if (tileIndex >= 0 && (direction === 'left' || direction === 'right')) {
         event.preventDefault();
         const next = (tileIndex + (direction === 'right' ? 1 : tiles().length - 1)) % Math.max(1, tiles().length);
-        setFocus(next); tiles()[next].focus(); return;
+        setFocus(next); focusAndReveal(tiles()[next]); return;
       }
-      if (tileIndex >= 0 && direction === 'up') { event.preventDefault(); $('weatherDisplay').focus(); return; }
-      if (tileIndex >= 0 && direction === 'down') { event.preventDefault(); $('settingsButton').focus(); return; }
+      if (tileIndex >= 0 && direction === 'up') { event.preventDefault(); focusAndReveal($('weatherDisplay')); return; }
+      if (tileIndex >= 0 && direction === 'down') { event.preventDefault(); focusAndReveal($('settingsButton')); return; }
       if ((active && active.id === 'weatherDisplay' && direction === 'down') || (active && active.id === 'settingsButton' && direction === 'up')) {
-        event.preventDefault(); if (tiles()[currentFocus]) tiles()[currentFocus].focus(); return;
+        event.preventDefault(); if (tiles()[currentFocus]) focusAndReveal(tiles()[currentFocus]); return;
       }
-      if (active && active.id === 'weatherDisplay' && (direction === 'left' || direction === 'right')) {
-        event.preventDefault(); if (tiles()[currentFocus]) tiles()[currentFocus].focus(); return;
-      }
-      if (active && active.id === 'settingsButton' && (direction === 'left' || direction === 'right')) {
-        event.preventDefault(); if (tiles()[currentFocus]) tiles()[currentFocus].focus(); return;
+      if (active && (active.id === 'weatherDisplay' || active.id === 'settingsButton') && (direction === 'left' || direction === 'right')) {
+        event.preventDefault(); if (tiles()[currentFocus]) focusAndReveal(tiles()[currentFocus]); return;
       }
       if (!active || !active.classList || !active.classList.contains('app-tile')) {
-        event.preventDefault(); if (tiles()[currentFocus]) tiles()[currentFocus].focus(); return;
+        event.preventDefault(); if (tiles()[currentFocus]) focusAndReveal(tiles()[currentFocus]); return;
       }
     }
     if (isConfirm) {
-      const active = document.activeElement;
       if (active && (active.id === 'weatherDisplay' || active.id === 'settingsButton')) { event.preventDefault(); active.click(); return; }
       if (active && active.classList && active.classList.contains('app-tile')) { event.preventDefault(); launchApp(Number(active.dataset.index)); return; }
       event.preventDefault(); launchApp(currentFocus);
     }
   }
   function init() {
-    renderApps(); applyVisualSettings(); bindSettings();
+    renderApps(); applyVisualSettings(); enhanceAllTvSelects(); bindSettings();
+    const settingsContent = $('settingsContent');
+    settingsContent.addEventListener('focusin', event => {
+      const focusedElement = event.target;
+      if (focusedElement && focusedElement !== settingsContent) {
+        requestAnimationFrame(() => {
+          if (document.activeElement === focusedElement) focusAndReveal(focusedElement);
+        });
+      }
+    });
+    settingsContent.addEventListener('wheel', () => { closeAnyTvSelect(); }, { passive: true });
     $('settingsButton').addEventListener('focus', () => {});
     $('weatherDisplay').addEventListener('click', openForecast);
     $('closeForecast').addEventListener('click', closeForecast);
     window.addEventListener('keydown', handleKeyDown, true);
+    document.addEventListener('pointerdown', event => {
+      if (!openTvSelectElement) return;
+      const record = tvSelectRegistry.get(openTvSelectElement);
+      if (record && !record.wrapper.contains(event.target)) closeAnyTvSelect();
+    }, true);
     // Some webOS builds dispatch mousemove rather than Pointer Events for the Magic Remote.
     const updatePointerFocus = (event) => {
       const tile = event.target && event.target.closest ? event.target.closest('.app-tile') : null;
@@ -878,9 +1328,11 @@
     updateClock(); setInterval(updateClock, 1000); scheduleWeather(); resetIdleTimer();
     (async function restoreWallpaperOnStartup() {
       let restored = false;
-      if (settings.wallpaperUrl) restored = await applyWallpaperUrl(settings.wallpaperUrl);
+      if (settings.personalWallpaperId) restored = await restorePersonalWallpaper();
+      else if (settings.wallpaperUrl) restored = await applyWallpaperUrl(settings.wallpaperUrl);
       else restored = await showStoredWallpaper();
       if (!restored) {
+        settings.personalWallpaperId = '';
         settings.wallpaperUrl = DEFAULT_WALLPAPER;
         const fallbackApplied = await applyWallpaperUrl(DEFAULT_WALLPAPER);
         if (fallbackApplied) saveSettings();

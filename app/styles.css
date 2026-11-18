@@ -22,8 +22,10 @@ button { color:inherit; }
 .home-screen.has-wallpaper .wallpaper-image { opacity:1; }
 .wallpaper-shade { position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(90deg,rgba(0,0,0,.2),transparent 60%),linear-gradient(0deg,rgba(0,0,0,.38),transparent 52%,rgba(0,0,0,.18)); }
 .topbar,.dock-zone,.footerbar { z-index:2; }
-.topbar { position:absolute; top:var(--safe-pad-y); left:var(--safe-pad-x); right:var(--safe-pad-x); display:flex; justify-content:flex-end; align-items:flex-start; gap:3vw; }
-.top-right { display:flex; align-items:flex-start; gap:1vw; }
+.topbar { position:absolute; top:7.4vh; left:var(--safe-pad-x); right:var(--safe-pad-x); display:flex; justify-content:center; align-items:center; gap:3vw; }
+.top-center { display:flex; align-items:center; justify-content:center; gap:clamp(36px,5vw,92px); margin:0 auto; }
+.weather-display,.clock-display { min-width:0; }
+.clock-display { align-items:flex-start; text-align:left; }
 .weather-display,.clock-display { display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:4px; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
 .weather-display { min-width:290px; cursor:pointer; appearance:none; -webkit-appearance:none; color:inherit; text-align:left; transition:filter 130ms ease,transform 130ms ease; }
 .weather-display:hover { filter:brightness(1.13); transform:translateY(-2px); }
@@ -37,8 +39,8 @@ button { color:inherit; }
 .clock-display { align-items:flex-end; text-align:right; min-width:260px; }
 .clock-time { font-size:clamp(58px,5vw,94px); font-weight:300; letter-spacing:.015em; line-height:1; opacity:var(--clock-brightness); text-shadow:0 2px 16px rgba(0,0,0,.3); }
 .clock-date { margin-top:11px; color:rgba(255,255,255,.82); font-size:clamp(16px,1.2vw,23px); letter-spacing:.1em; opacity:var(--clock-brightness); text-shadow:0 2px 12px rgba(0,0,0,.45); }
-.dock-zone { position:absolute; left:50%; bottom:12.2vh; transform:translateX(-50%); width:min(88vw,1550px); }
-.dock-glass { position:relative; isolation:isolate; overflow:hidden; padding:clamp(11px,1.4vw,25px); border:1.5px solid rgba(255,255,255,.52); border-radius:clamp(22px,2.5vw,44px); background:rgba(30,33,37,var(--dock-glass-alpha)); box-shadow:0 22px 62px rgba(0,0,0,.34),inset 0 1px 1px rgba(255,255,255,.27),inset 0 0 0 1px rgba(255,255,255,.07); backdrop-filter:blur(var(--dock-blur)); -webkit-backdrop-filter:blur(var(--dock-blur)); }
+.dock-zone { position:absolute; left:50%; bottom:10.5vh; transform:translateX(-50%); width:min(76vw,1220px); }
+.dock-glass { position:relative; isolation:isolate; overflow:hidden; padding:clamp(9px,.85vw,16px); border:1.5px solid rgba(255,255,255,.52); border-radius:clamp(18px,1.8vw,32px); background:rgba(30,33,37,var(--dock-glass-alpha)); box-shadow:0 22px 62px rgba(0,0,0,.34),inset 0 1px 1px rgba(255,255,255,.27),inset 0 0 0 1px rgba(255,255,255,.07); backdrop-filter:blur(var(--dock-blur)); -webkit-backdrop-filter:blur(var(--dock-blur)); }
 .dock-glass::before { content:""; position:absolute; z-index:0; inset:0; pointer-events:none; border-radius:inherit; background:linear-gradient(108deg,rgba(255,255,255,var(--dock-gradient-alpha)) 0%,rgba(255,255,255,calc(var(--dock-gradient-alpha)*.72)) 17%,rgba(255,255,255,calc(var(--dock-gradient-alpha)*.30)) 42%,rgba(255,255,255,0) 74%); }
 .dock-glass::after { content:""; position:absolute; z-index:0; inset:1px; pointer-events:none; border-radius:inherit; border-top:1px solid rgba(255,255,255,.23); }
 .dock-glass .app-row { position:relative; z-index:1; }
@@ -46,7 +48,7 @@ body.glass-light .dock-glass { background:rgba(226,232,239,var(--dock-glass-alph
 body.glass-light .dock-glass::before { background:linear-gradient(108deg,rgba(255,255,255,var(--dock-gradient-alpha)) 0%,rgba(255,255,255,calc(var(--dock-gradient-alpha)*.82)) 18%,rgba(255,255,255,calc(var(--dock-gradient-alpha)*.35)) 43%,rgba(255,255,255,0) 76%); }
 body.glass-light .dock-glass::after { border-top-color:rgba(255,255,255,.62); }
 .app-row { display:grid; grid-template-columns:repeat(var(--app-count,5),minmax(0,1fr)); gap:clamp(9px,1.5vw,27px); align-items:stretch; }
-.app-tile { position:relative; min-width:0; min-height:clamp(106px,9.3vw,168px); padding:clamp(10px,1vw,18px) 6px; border:1.5px solid rgba(255,255,255,.29); border-radius:clamp(15px,1.35vw,25px); background:linear-gradient(145deg,rgba(9,10,12,.76),rgba(0,0,0,.60) 70%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:clamp(6px,.7vw,12px); cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.08); transform:translateZ(0); transition:transform 130ms ease,border-color 130ms ease,box-shadow 130ms ease,background 130ms ease; outline:none; }
+.app-tile { position:relative; min-width:0; min-height:clamp(78px,7.1vw,124px); padding:clamp(8px,.75vw,14px) 5px; border:1.5px solid rgba(255,255,255,.29); border-radius:clamp(15px,1.35vw,25px); background:linear-gradient(145deg,rgba(9,10,12,.76),rgba(0,0,0,.60) 70%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:clamp(4px,.45vw,8px); cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.08); transform:translateZ(0); transition:transform 130ms ease,border-color 130ms ease,box-shadow 130ms ease,background 130ms ease; outline:none; }
 .app-tile:hover,.app-tile:focus,.app-tile.focused { transform:translateY(-5px) scale(1.035); border-color:rgba(255,255,255,.98); box-shadow:0 0 0 3px rgba(255,255,255,.72),0 15px 32px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.18); background:linear-gradient(145deg,rgba(38,40,43,.86),rgba(8,9,11,.76) 70%); }
 .app-tile:focus-visible { outline:2px solid rgba(255,255,255,.9); outline-offset:4px; }
 .app-symbol { display:flex; align-items:center; justify-content:center; height:clamp(39px,4vw,70px); min-width:52px; color:#fff; font-weight:800; font-size:clamp(25px,3.1vw,55px); line-height:.86; filter:brightness(var(--icon-brightness)); }
@@ -57,7 +59,7 @@ body.glass-light .dock-glass::after { border-top-color:rgba(255,255,255,.62); }
 .symbol-spotify { color:#1ed760; font-size:clamp(42px,4.7vw,82px); }
 .symbol-plex { color:#f5a623; font-size:clamp(38px,4vw,72px); }
 .symbol-custom { border:2px solid rgba(255,255,255,.85); border-radius:50%; width:clamp(39px,4vw,70px); font-weight:300; }
-.app-label { color:#fff; opacity:var(--text-brightness); font-size:clamp(10px,.85vw,16px); letter-spacing:.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:98%; }
+.app-label { color:#fff; opacity:var(--text-brightness); font-size:clamp(10px,.72vw,14px); letter-spacing:.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:98%; }
 .dock-hint { margin-top:1.4vh; text-align:center; color:rgba(255,255,255,.72); font-size:clamp(8px,.62vw,11px); letter-spacing:.2em; }
 .footerbar { position:absolute; left:var(--safe-pad-x); right:var(--safe-pad-x); bottom:3.5vh; display:flex; justify-content:flex-end; align-items:center; color:rgba(255,255,255,.75); font-size:clamp(9px,.68vw,12px); letter-spacing:.16em; }
 .settings-button { border:1px solid rgba(255,255,255,.36); background:rgba(20,20,20,.24); border-radius:999px; padding:10px 17px; color:rgba(255,255,255,.9); font-size:clamp(9px,.68vw,12px); letter-spacing:.15em; cursor:pointer; backdrop-filter:blur(8px); }
@@ -96,19 +98,19 @@ body.glass-light .dock-glass::after { border-top-color:rgba(255,255,255,.62); }
 @media (max-width:760px) { .forecast-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .forecast-footer { flex-direction:column; } }
 
 .settings-overlay { position:fixed; inset:0; z-index:30; background:rgba(0,0,0,.65); backdrop-filter:blur(10px); display:grid; place-items:center; padding:4vh 4vw; }
-.settings-panel { width:min(1450px,94vw); height:min(850px,92vh); display:grid; grid-template-columns:270px minmax(0,1fr); background:rgba(17,18,20,.97); border:1px solid rgba(255,255,255,.18); border-radius:22px; overflow:hidden; box-shadow:0 24px 90px rgba(0,0,0,.55); }
-.settings-sidebar { padding:34px 20px; background:rgba(255,255,255,.035); border-right:1px solid rgba(255,255,255,.1); display:flex; flex-direction:column; gap:8px; }
+.settings-panel { width:min(1540px,96vw); height:min(920px,94vh); min-height:0; display:grid; grid-template-columns:250px minmax(0,1fr); background:rgba(17,18,20,.97); border:1px solid rgba(255,255,255,.18); border-radius:22px; overflow:hidden; box-shadow:0 24px 90px rgba(0,0,0,.55); }
+.settings-sidebar { min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:28px 17px; background:rgba(255,255,255,.035); border-right:1px solid rgba(255,255,255,.1); display:flex; flex-direction:column; gap:7px; }
 .settings-heading { font-size:21px; letter-spacing:.12em; margin:0 12px 34px; font-weight:600; }
 .settings-heading span { display:block; font-size:9px; color:rgba(255,255,255,.4); letter-spacing:.28em; margin-top:9px; }
 .settings-tab { padding:14px 15px; text-align:left; border:0; background:transparent; color:rgba(255,255,255,.6); border-radius:10px; font-size:15px; cursor:pointer; }
 .settings-tab.active,.settings-tab:focus { background:rgba(255,255,255,.12); color:#fff; outline:1px solid rgba(255,255,255,.28); }
 .sidebar-bottom { margin-top:auto; padding:12px; color:rgba(255,255,255,.3); font-size:9px; letter-spacing:.12em; }
-.settings-main { display:flex; flex-direction:column; min-width:0; padding:35px 42px 25px; }
+.settings-main { display:flex; flex-direction:column; min-width:0; min-height:0; overflow:hidden; padding:28px 34px 20px; }
 .settings-topline { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,.1); padding-bottom:22px; }
 .eyebrow { color:rgba(255,255,255,.42); font-size:9px; letter-spacing:.28em; }
 .settings-topline h1 { margin:7px 0 0; font-weight:400; font-size:29px; }
 .close-button { width:42px; height:42px; border:1px solid rgba(255,255,255,.2); border-radius:50%; background:transparent; color:#fff; font-size:28px; cursor:pointer; }
-.settings-content { min-height:0; flex:1; overflow:auto; padding:24px 5px 24px 0; scrollbar-width:thin; scrollbar-color:#555 transparent; }
+.settings-content { min-height:0; height:0; flex:1 1 0%; overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; padding:20px 12px 26px 0; scrollbar-width:auto; scrollbar-color:#8c8c8c rgba(255,255,255,.06); scroll-behavior:auto; }
 .settings-page { display:none; gap:17px; }
 .settings-page.active { display:grid; }
 .setting-card { padding:22px 24px; border:1px solid rgba(255,255,255,.11); background:rgba(255,255,255,.035); border-radius:15px; }
@@ -196,7 +198,7 @@ body.idle-dim .home-screen .topbar,body.idle-dim .home-screen .footerbar { opaci
 
 /* Home Center 0.7.0: full Magic Remote directional navigation and native app icons */
 .app-tile { position:relative; }
-.app-icon-image { display:block; width:clamp(54px,5.0vw,88px); height:clamp(54px,5.0vw,88px); object-fit:contain; border-radius:12px; background:var(--app-icon-bg,transparent); filter:brightness(var(--icon-brightness)); }
+.app-icon-image { display:block; width:clamp(42px,3.8vw,68px); height:clamp(42px,3.8vw,68px); object-fit:contain; border-radius:12px; background:var(--app-icon-bg,transparent); filter:brightness(var(--icon-brightness)); }
 .app-picker-line { display:grid; grid-template-columns:76px minmax(0,1fr); align-items:center; gap:14px; min-width:0; }
 .app-picker-preview { width:76px; height:76px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid rgba(255,255,255,.22); border-radius:13px; background:rgba(255,255,255,.08); color:#fff; font-size:28px; font-weight:700; }
 .app-picker-preview img { display:block; width:100%; height:100%; padding:7px; object-fit:contain; }
@@ -213,3 +215,146 @@ body.idle-dim .home-screen .topbar,body.idle-dim .home-screen .footerbar { opaci
 /* v0.7.0 wallpaper rendering: image is a real foreground layer, not a negative-z pseudo-element. */
 .wallpaper-card .wallpaper-preview-fallback { width:100%; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; border-radius:6px; background:linear-gradient(135deg,#18283c,#34475a 55%,#111827); color:rgba(255,255,255,.72); font-size:14px; letter-spacing:.08em; }
 .wallpaper-card-meta { overflow-wrap:anywhere; }
+
+
+/* LG Home Center 0.8.0 — reliable TV settings scrolling and focus navigation */
+.settings-panel,.settings-main,.settings-content,.settings-sidebar { min-height:0; }
+.settings-content { overscroll-behavior-y:contain; }
+.settings-content::-webkit-scrollbar,.settings-sidebar::-webkit-scrollbar { width:10px; }
+.settings-content::-webkit-scrollbar-track,.settings-sidebar::-webkit-scrollbar-track { background:rgba(255,255,255,.05); border-radius:8px; }
+.settings-content::-webkit-scrollbar-thumb,.settings-sidebar::-webkit-scrollbar-thumb { background:rgba(220,220,220,.38); border-radius:8px; }
+.settings-content .setting-card { margin-bottom:16px; }
+.settings-content .setting-card:last-child { margin-bottom:8px; }
+.settings-tab { min-height:54px; font-size:18px; padding:14px 16px; }
+.settings-topline h1 { font-size:34px; }
+.settings-topline { flex:0 0 auto; }
+.settings-actions { flex:0 0 auto; padding-top:12px; }
+.settings-actions #saveState { font-size:14px; }
+.settings-actions .primary-action { min-height:52px; font-size:18px; }
+.setting-card h2 { font-size:22px; }
+.setting-card p,.setting-note { font-size:16px !important; line-height:1.55; }
+.field-label { font-size:16px; margin:16px 0 9px; }
+input[type=text],input[type=url],input[type=time],select,textarea { min-height:54px; font-size:20px; padding:13px 15px; }
+input[type=file] { font-size:17px; }
+.small-action,.primary-action,.file-button { min-height:50px; font-size:17px; padding:12px 18px; }
+.toggle-row { font-size:17px; min-height:42px; }
+.range-row label { font-size:16px; }
+.app-editor { grid-template-columns:1fr; gap:14px; }
+.app-edit-row { padding:16px; gap:12px; }
+.app-edit-row .installed-app-picker { min-height:60px; font-size:20px; }
+.app-edit-row .installed-app-picker option { font-size:18px; }
+.app-picker-preview { width:78px; height:78px; }
+.app-picker-line { grid-template-columns:78px minmax(0,1fr); }
+.app-edit-fields input { min-height:58px; font-size:19px; }
+.settings-content button:focus,.settings-content select:focus,.settings-content input:focus,.settings-content textarea:focus,.settings-sidebar button:focus,.settings-actions button:focus,.file-button:focus { outline:3px solid rgba(255,255,255,.95) !important; outline-offset:3px; }
+.settings-content :focus-visible { scroll-margin-block:30px; }
+.wallpaper-gallery { grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.wallpaper-card { padding:9px; }
+.wallpaper-card-title { font-size:17px; }
+.wallpaper-card-meta { font-size:13px; }
+.personal-wallpaper-heading { display:flex; justify-content:space-between; align-items:center; margin:20px 0 8px; }
+.personal-wallpaper-heading h3 { margin:0; font-size:19px; }
+.personal-wallpaper-card { position:relative; display:flex; flex-direction:column; gap:7px; padding:8px; background:rgba(0,0,0,.3); color:#fff; border:1px solid rgba(255,255,255,.2); border-radius:12px; min-width:0; }
+.personal-wallpaper-select { display:block; padding:0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
+.personal-wallpaper-select img { display:block; width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:7px; background:#17191d; }
+.personal-wallpaper-select span { display:block; padding:7px 2px 2px; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.personal-wallpaper-card.selected { border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.55); }
+.personal-wallpaper-delete { min-height:38px; padding:7px 10px; font-size:14px; align-self:flex-end; }
+.wallpaper-empty { padding:18px; border:1px dashed rgba(255,255,255,.24); border-radius:10px; color:rgba(255,255,255,.6); font-size:15px; }
+.home-chooser-status { margin:14px 0; padding:16px 18px; border:1px solid rgba(255,255,255,.19); border-radius:10px; background:rgba(255,255,255,.055); font-size:18px; line-height:1.5; }
+.home-chooser-actions { margin:12px 0 18px; flex-wrap:wrap; }
+.home-chooser-steps { padding-left:26px; margin:12px 0 18px; color:rgba(255,255,255,.84); font-size:17px; line-height:1.7; }
+.home-chooser-steps li { padding:4px 0 4px 5px; }
+@media (max-width:1100px) {
+  .settings-overlay { padding:2vh 2vw; }
+  .settings-panel { width:96vw; height:96vh; grid-template-columns:200px minmax(0,1fr); }
+  .settings-main { padding:20px 22px 16px; }
+  .settings-sidebar { padding:20px 12px; }
+  .settings-content { padding-right:8px; }
+  .top-center { gap:26px; }
+  .clock-display { min-width:0; }
+  .weather-display { min-width:0; }
+}
+@media (max-width:760px) {
+  .settings-panel { grid-template-columns:150px minmax(0,1fr); }
+  .settings-tab { font-size:14px; padding:10px; }
+  .wallpaper-gallery { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .top-center { flex-direction:column; align-items:center; gap:18px; }
+  .clock-display { align-items:center; text-align:center; }
+}
+
+
+/* LG Home Center 0.8.0 — final TV layout and remote-first Settings */
+.topbar { top:5.8vh; left:0; right:0; justify-content:center; }
+.top-center { width:min(92vw,1120px); display:flex; align-items:center; justify-content:center; gap:clamp(34px,4.2vw,82px); margin:0 auto; }
+.weather-display,.clock-display { min-width:0 !important; align-items:center !important; justify-content:center; text-align:center !important; }
+.weather-copy { align-items:center; margin-left:0; }
+.clock-display { min-width:0; }
+.clock-time { font-size:clamp(54px,4.5vw,82px); }
+.clock-date { font-size:clamp(14px,1.0vw,19px); margin-top:8px; letter-spacing:.08em; }
+.weather-icon { font-size:clamp(42px,3.5vw,66px); }
+.weather-temp { font-size:clamp(44px,3.7vw,70px); }
+.weather-detail { font-size:clamp(16px,1.05vw,21px); }
+.weather-label { font-size:clamp(10px,.64vw,12px); }
+
+.dock-zone { width:min(68vw,1100px); bottom:8.1vh; }
+.dock-glass { padding:clamp(7px,.62vw,12px); border-radius:clamp(15px,1.35vw,25px); }
+.app-row { gap:clamp(8px,1.05vw,19px); }
+.app-tile { min-height:clamp(68px,5.0vw,96px); padding:7px 5px; border-radius:clamp(12px,1.0vw,19px); gap:clamp(3px,.32vw,6px); }
+.app-icon-image { width:clamp(36px,3.0vw,55px); height:clamp(36px,3.0vw,55px); border-radius:9px; }
+.app-symbol { height:clamp(34px,3.0vw,55px); min-width:38px; font-size:clamp(22px,2.4vw,43px); }
+.symbol-nuvio { width:clamp(34px,3.0vw,55px); height:clamp(34px,3.0vw,55px); border-width:3px; border-radius:10px; }
+.symbol-youtube { font-size:clamp(32px,3.2vw,59px); }
+.symbol-prime { font-size:clamp(14px,1.35vw,25px); }
+.symbol-spotify { font-size:clamp(35px,3.5vw,64px); }
+.symbol-plex { font-size:clamp(31px,3.0vw,55px); }
+.app-label { font-size:clamp(10px,.68vw,13px); }
+.dock-hint { margin-top:1.0vh; font-size:clamp(8px,.56vw,10px); }
+
+/* The Settings content area must own the vertical scroll on older webOS Chromium. */
+.settings-overlay { overflow:hidden; }
+.settings-panel { height:min(940px,94vh); min-height:0; }
+.settings-main { display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+.settings-topline { flex:0 0 auto; }
+.settings-content { display:block; flex:1 1 auto; height:auto !important; min-height:0; overflow-x:hidden; overflow-y:scroll !important; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; touch-action:pan-y; scroll-behavior:auto !important; scrollbar-width:auto; }
+.settings-page.active { display:grid; align-content:start; gap:16px; }
+.settings-actions { flex:0 0 auto; }
+.settings-content .setting-card { min-width:0; }
+.settings-content input,.settings-content textarea { max-width:100%; }
+
+/* Replacements for native TV SELECT controls: visible text and predictable D-pad navigation. */
+.tv-native-select { display:none !important; }
+.tv-select-wrap { position:relative; display:block; width:100%; min-width:0; }
+.tv-select-trigger { display:flex; align-items:center; justify-content:space-between; gap:18px; width:100%; min-width:0; min-height:58px; padding:13px 18px; border:1px solid rgba(255,255,255,.23); border-radius:10px; background:linear-gradient(135deg,rgba(37,40,45,.98),rgba(19,21,25,.98)); color:#fff; text-align:left; font-size:20px; line-height:1.35; cursor:pointer; }
+.tv-select-trigger::after { content:'▾'; flex:0 0 auto; color:rgba(255,255,255,.8); font-size:22px; }
+.tv-select-trigger:focus,.tv-select-trigger:hover,.tv-select-trigger[aria-expanded="true"] { outline:3px solid rgba(255,255,255,.93); outline-offset:3px; border-color:#fff; background:#30343b; }
+.tv-select-menu { position:fixed; z-index:90; display:flex; flex-direction:column; gap:3px; padding:7px; overflow-y:auto; overscroll-behavior:contain; border:1px solid rgba(255,255,255,.32); border-radius:12px; background:rgba(13,15,18,.985); box-shadow:0 18px 55px rgba(0,0,0,.7); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); }
+.tv-select-menu.hidden { display:none !important; }
+.tv-select-option { display:block; width:100%; min-height:48px; flex:0 0 auto; padding:10px 16px; border:1px solid transparent; border-radius:8px; background:transparent; color:rgba(255,255,255,.9); text-align:left; font-size:19px; line-height:1.3; cursor:pointer; }
+.tv-select-option.selected { background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.38); color:#fff; }
+.tv-select-option:focus,.tv-select-option:hover { outline:3px solid rgba(255,255,255,.95); outline-offset:-3px; background:rgba(255,255,255,.2); }
+.tv-select-option:disabled { opacity:.4; }
+.app-picker-line .tv-select-trigger { min-height:68px; font-size:19px; }
+.app-picker-line .tv-select-option { font-size:18px; min-height:50px; }
+
+.settings-sidebar { overflow-y:auto !important; overscroll-behavior-y:contain; }
+.settings-tab { min-height:56px; font-size:18px; }
+.settings-content button:focus,.settings-content input:focus,.settings-content textarea:focus,.settings-sidebar button:focus,.settings-actions button:focus { outline:3px solid rgba(255,255,255,.95) !important; outline-offset:3px; }
+.settings-content .file-input { min-height:48px; font-size:17px; }
+.personal-wallpaper-gallery { grid-template-columns:repeat(3,minmax(0,1fr)); }
+
+@media (max-width:1100px) {
+  .topbar { top:4.5vh; }
+  .top-center { width:94vw; gap:24px; }
+  .dock-zone { width:min(78vw,980px); bottom:8vh; }
+  .settings-content { padding-right:8px; }
+}
+@media (max-width:760px) {
+  .top-center { flex-direction:row; align-items:center; gap:12px; }
+  .weather-display,.clock-display { align-items:center !important; text-align:center !important; }
+  .dock-zone { width:92vw; }
+  .app-row { gap:5px; }
+  .app-tile { min-height:68px; }
+  .settings-panel { grid-template-columns:140px minmax(0,1fr); }
+  .settings-tab { font-size:14px; min-height:44px; }
+}

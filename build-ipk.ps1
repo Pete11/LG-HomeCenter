@@ -24,7 +24,12 @@ if (-not (Test-Path $LibraryPath)) {
 
 node --check (Join-Path $AppPath 'app.js')
 $null = Get-Content (Join-Path $AppPath 'appinfo.json') -Raw | ConvertFrom-Json
-if (-not (Test-Path (Join-Path $AppPath 'assets/wallpapers/alpine-lake-4k.jpg'))) { throw 'Bundled wallpaper is missing.' }
+if (-not (Test-Path (Join-Path $AppPath 'assets/wallpapers/alpine-lake-4k.jpg'))) { throw 'Bundled Alpine Lake wallpaper is missing.' }
+if (-not (Test-Path (Join-Path $AppPath 'assets/wallpapers/otherworld-desert-4k.jpg'))) { throw 'Bundled Otherworld Desert wallpaper is missing.' }
+$AppInfo = Get-Content (Join-Path $AppPath 'appinfo.json') -Raw | ConvertFrom-Json
+if ($AppInfo.version -ne '0.8.0') { throw "Expected appinfo version 0.8.0, found $($AppInfo.version)." }
+if (-not ($AppInfo.appCategory -contains 'home')) { throw 'appCategory home is required for Home Chooser.' }
+if (-not ($AppInfo.requiredPermissions -contains 'org.webosbrew.homechooser.applications')) { throw 'Home Chooser application permission is required.' }
 New-Item -ItemType Directory -Path $DistPath -Force | Out-Null
 ares-package $AppPath -o $DistPath
 Write-Host "IPK package created in: $DistPath" -ForegroundColor Green

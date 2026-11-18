@@ -1,6 +1,6 @@
 {
   "id": "com.homecenter.launcher",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "vendor": "HomeCenter Project",
   "type": "web",
   "main": "index.html",
@@ -11,5 +11,9 @@
   "transparent": false,
   "appCategory": [
     "home"
+  ],
+  "disableBackHistoryAPI": true,
+  "requiredPermissions": [
+    "org.webosbrew.homechooser.applications"
   ]
 }

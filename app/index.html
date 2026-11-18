@@ -12,7 +12,7 @@
     <img id="wallpaperImage" class="wallpaper-image" alt="" aria-hidden="true">
     <div class="wallpaper-shade"></div>
     <header class="topbar">
-      <div class="top-right">
+      <div class="top-center">
         <button type="button" class="weather-display" id="weatherDisplay" aria-label="Open 10-day weather forecast" aria-haspopup="dialog" aria-controls="forecastOverlay" title="Open 10-day forecast">
           <div class="weather-main"><span class="weather-icon" id="weatherIcon">◌</span><span class="weather-temp" id="weatherTemp">--°</span></div>
           <div class="weather-copy"><span class="weather-detail" id="weatherDetail">Loading weather</span><span class="weather-label">10-DAY FORECAST</span></div>
@@ -72,12 +72,13 @@
         <button class="settings-tab" data-tab="oled">OLED & Display</button>
         <button class="settings-tab" data-tab="idle">Screensaver</button>
         <button class="settings-tab" data-tab="power">Power</button>
+        <button class="settings-tab" data-tab="home">Home Button</button>
         <button class="settings-tab" data-tab="advanced">Advanced</button>
-        <div class="sidebar-bottom">ESC / BACK · CLOSE</div>
+        <div class="sidebar-bottom">UP / DOWN · NAVIGATE<br>OK · SELECT<br>BACK · NEXT SETTING / EXIT FROM MENU</div>
       </aside>
       <div class="settings-main">
         <div class="settings-topline"><div><div class="eyebrow">PERSONALIZATION</div><h1 id="settingsTitle">General</h1></div><button id="closeSettings" class="close-button" type="button" aria-label="Close">×</button></div>
-        <div class="settings-content">
+        <div class="settings-content" id="settingsContent" tabindex="0" aria-label="Settings options">
           <section class="settings-page active" data-page="general">
             <div class="setting-card">
               <h2>4K Wallpaper Library</h2>
@@ -89,11 +90,15 @@
             </div>
             <div class="setting-card">
               <h2>Custom Wallpaper</h2>
-              <p>Upload a local image or enter a direct image URL. The selected local image is saved on this TV.</p>
+              <p>Upload your own movie posters, film stills, or any image from a USB drive or local file picker. Selected images are saved on this TV.</p>
               <label class="field-label" for="wallpaperUrl">Wallpaper URL</label>
               <div class="inline-field"><input id="wallpaperUrl" type="url" placeholder="https://.../wallpaper.jpg"><button id="applyWallpaperUrl" class="small-action">Apply</button></div>
-              <label class="field-label" for="wallpaperFile">Local image</label>
-              <input id="wallpaperFile" type="file" accept="image/*" class="file-input">
+              <label class="field-label" for="wallpaperFile">Upload your wallpapers / movie posters</label>
+              <input id="wallpaperFile" type="file" accept="image/*" multiple class="file-input">
+              <p class="setting-note">Select one or several images. Common browser-supported image formats are accepted, up to 30 MB per image. Each image is checked by the TV before it is stored in your Personal Wallpapers collection.</p>
+              <div class="personal-wallpaper-heading"><h3>Personal Wallpapers</h3><span id="personalWallpaperCount" class="muted">0 images</span></div>
+              <div id="personalWallpaperGallery" class="wallpaper-gallery personal-wallpaper-gallery" aria-label="Personal wallpapers"></div>
+              <div id="personalWallpaperStatus" class="muted wallpaper-gallery-status">Your uploaded posters and images will appear here.</div>
               <button id="clearWallpaper" class="text-action">Restore default wallpaper</button>
             </div>
             <div class="setting-card two-col">
@@ -140,10 +145,29 @@
             </div>
           </section>
 
+          <section class="settings-page" data-page="home">
+            <div class="setting-card">
+              <h2>Use LG Home Center for the remote HOME button</h2>
+              <p>Home Center declares itself as a webOS Home app. Home Chooser is the supported way to assign the physical HOME button without replacing LG system files.</p>
+              <div class="home-chooser-status" id="homeChooserStatus" role="status" aria-live="polite">Home Chooser status has not been checked.</div>
+              <div class="button-row home-chooser-actions">
+                <button id="checkHomeChooser" class="small-action" type="button">Check Home Chooser</button>
+                <button id="openHomeChooser" class="small-action" type="button">Open Home Chooser</button>
+              </div>
+              <ol class="home-chooser-steps">
+                <li>Install <strong>Home Chooser</strong> from Homebrew Channel and open it once to complete its setup.</li>
+                <li>Then install or update LG Home Center 0.8.0. This version requests the Home Chooser launcher permission.</li>
+                <li>Open Home Chooser, select <strong>LG Home Center</strong>, press OK and confirm.</li>
+                <li>Press the physical HOME button to test. To restore the original interface, open Home Chooser and select <strong>LG Home (stock)</strong>.</li>
+              </ol>
+              <p class="setting-note">Home Chooser and root-enabled Homebrew Channel are required. Home Center does not change the HOME assignment automatically and does not overwrite LG system files.</p>
+            </div>
+          </section>
+
           <section class="settings-page" data-page="advanced">
             <div class="setting-card"><h2>Custom CSS</h2><p>Additional CSS rules. Avoid aggressive selectors that could hide controls or settings.</p><textarea id="customCss" spellcheck="false" placeholder=".clock-time { letter-spacing: .05em; }"></textarea><button id="applyCustomCss" class="small-action">Apply CSS</button></div>
             <div class="setting-card"><h2>Configuration</h2><p>Export your settings to a JSON file or import a previously saved backup.</p><div class="button-row"><button id="exportSettings" class="small-action">Export settings</button><label class="small-action file-button" for="importSettingsFile">Import settings</label><input id="importSettingsFile" type="file" accept="application/json" hidden></div></div>
-            <div class="setting-card"><h2>System information</h2><p>Home Center 0.7.0 · webOS TV app · Up to 6 shortcuts · Local settings</p><p class="muted">The default LG HOME button and TV power controls are not changed by this app package.</p></div>
+            <div class="setting-card"><h2>System information</h2><p>Home Center 0.8.0 · webOS TV app · Up to 6 shortcuts · Local settings</p><p class="muted">The HOME button is assigned through Home Chooser. TV power controls still require separate root-level integration.</p></div>
           </section>
         </div>
         <div class="settings-actions"><span id="saveState">Settings are saved automatically on this device.</span><button id="doneSettings" class="primary-action">Done</button></div>
